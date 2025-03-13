@@ -1,16 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
+using OcrTextExtract.Converters;
 using OcrTextExtract.Helpers;
 using OcrTextExtract.ViewModels;
 
@@ -21,18 +15,21 @@ namespace OcrTextExtract
     /// </summary>
     public partial class MaxScreenshotWindow : Window
     {
-        private readonly MaxScreenshotWindowViewModel _screenshotViewModel;
+        private readonly MaxScreenshotWindowViewModel _viewModel;
 
         private Point point1 = new Point();
         private Point point2 = new Point();
         private StackPanel cutPanel = null;
         private Thickness cutPanelMargin = new Thickness(0, 0, 0, 0);
 
-        // <StackPanel Width="100" Height="100"  Background="AliceBlue" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,0,0,0"></StackPanel>
+        private StackPanel topPanel = null;
+        private StackPanel leftPanel = null;
+        private StackPanel rightPanel = null;
+        private StackPanel bottomPanel = null;
 
         public MaxScreenshotWindow(ref MaxScreenshotWindowViewModel viewModel)
         {
-            _screenshotViewModel = viewModel;
+            _viewModel = viewModel;
 
             InitializeComponent();
 
@@ -53,14 +50,36 @@ namespace OcrTextExtract
             // 获取鼠标相对于窗口的位置
             // var point = this.point1 = e.GetPosition(this);
 
+
+            // 设置背景图片
+            var brush = new ImageBrush(ImageConvert.BitmapToBitmapImage(_viewModel.ScreenBitmap));
+            brush.Stretch = Stretch.None;
+            this.Background = brush;
+
+
             // 初始化或重置参数 
             this.IsMouseDown = true;
-            this.cutPanel = ElementHelpers.CreateNewStackPanel();
+            this.cutPanel = ElementHelpers.CreateNewStackPanel(Colors.Transparent);
             this.cutPanelMargin = new Thickness(0, 0, 0, 0);
+
+            var myColor = (Color)ColorConverter.ConvertFromString("#33222222");
+            this.topPanel = ElementHelpers.CreateNewStackPanel(myColor);
+            this.leftPanel = ElementHelpers.CreateNewStackPanel(myColor);
+            this.rightPanel = ElementHelpers.CreateNewStackPanel(myColor);
+            this.bottomPanel = ElementHelpers.CreateNewStackPanel(myColor);
+
             this.screenBox.Children.Clear();
-            this.screenBox.Children.Add(cutPanel);
+            this.screenBox.Background = new SolidColorBrush(Colors.Transparent);
+
+            this.screenBox.Children.Add(this.cutPanel);
+
+            this.screenBox.Children.Add(this.topPanel);
+            this.screenBox.Children.Add(this.leftPanel);
+            this.screenBox.Children.Add(this.rightPanel);
+            this.screenBox.Children.Add(this.bottomPanel);
 
             this.SetPanelRectangle(MouseState.Down, e.GetPosition(this));
+            this.SetOverlayRectangle(MouseState.Down, e.GetPosition(this));
         }
 
         /// <summary>
@@ -72,6 +91,7 @@ namespace OcrTextExtract
             if (IsMouseDown)
             {
                 this.SetPanelRectangle(MouseState.Move, e.GetPosition(this));
+                this.SetOverlayRectangle(MouseState.Move, e.GetPosition(this));
             }
         }
 
@@ -82,6 +102,7 @@ namespace OcrTextExtract
         {
             this.IsMouseDown = false;
             this.SetPanelRectangle(MouseState.Up, e.GetPosition(this));
+            this.SetOverlayRectangle(MouseState.Up, e.GetPosition(this));
 
 
             // if (!IsMouseUp)
@@ -104,7 +125,9 @@ namespace OcrTextExtract
             // }
         }
 
-
+        /// <summary>
+        /// 剪切面板处理
+        /// </summary>
         private void SetPanelRectangle(MouseState state, Point point)
         {
             // Console.WriteLine($"{ state.ToString() }, x = {point.X}, y = {point.Y}");
@@ -112,7 +135,7 @@ namespace OcrTextExtract
             if (state == MouseState.Down)
             {
                 this.point1 = point;
-                this.cutPanel.Margin = this.cutPanelMargin = new Thickness(this.point1.X, this.point1.Y, 0, 0);
+                this.cutPanel.Margin = this.cutPanelMargin = new Thickness(point.X, point.Y, 0, 0);
             }
             else
             {
@@ -143,6 +166,28 @@ namespace OcrTextExtract
                     this.cutPanel.Margin = this.cutPanelMargin;
                 }
             }
+        }
+
+        /// <summary>
+        /// 遮罩处理
+        /// </summary>
+        private void SetOverlayRectangle(MouseState state, Point point)
+        {
+            this.topPanel.Width = this.Width;
+            this.topPanel.Height = this.cutPanelMargin.Top;
+
+            this.leftPanel.Width = this.cutPanelMargin.Left;
+            this.leftPanel.Height = this.cutPanel.Height;
+            this.leftPanel.Margin = new Thickness(0, this.cutPanelMargin.Top, 0, 0);
+            
+            this.rightPanel.Width = this.Width - point.X + 20; // +20 避免像素计算时出现问题
+            this.rightPanel.Height = this.cutPanel.Height;
+            this.rightPanel.Margin = new Thickness(this.cutPanelMargin.Left + this.cutPanel.Width, this.cutPanelMargin.Top, 0, 0);
+
+            this.bottomPanel.Width = this.Width;
+            this.bottomPanel.Height = this.Height - point.Y + 20;  // +20 避免像素计算时出现问题
+            this.bottomPanel.Margin = new Thickness(0, this.cutPanelMargin.Top +  this.cutPanel.Height, 0, 0);
+
         }
 
         /// <summary>

@@ -5,16 +5,17 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:OcrTextExtract"
         mc:Ignorable="d"
-        Width="500" Height="360"
-        WindowStyle="None" AllowsTransparency="True" Background="Transparent">
+        WindowState="Maximized" WindowStyle="None" 
+        AllowsTransparency="True" Background="Transparent">
     
     <!--
+        Width="500" Height="360"
         WindowState="Maximized" WindowStyle="None"
     
         Background="#33222222"
     -->
 
-    <Grid Name="screenBox" Background="#99222222">
+    <Grid Name="screenBox" Background="#33222222">
         
     </Grid>
 </Window>

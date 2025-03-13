@@ -37,7 +37,6 @@ public partial class MainWindow : System.Windows.Window
 
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
-        Screenshot.Snapped += Screenshot_Snapped;
         this.ocr = new OCRUtils();
     }
 
@@ -59,26 +58,24 @@ public partial class MainWindow : System.Windows.Window
     /// </summary>
     private void btnCutExtract_Click(object sender, RoutedEventArgs e)
     {
-        // var screen = new Screenshot();
-        // screen.Start();
+        // 1. 当前窗口隐藏 50ms
+        // 2. 截取全屏
+        // 3. 将截取的图像设置为图像处理窗口的背景图片, 然后进行区域截取处理
+
+        this.Hide();
+        Thread.Sleep(50);
 
 
-        MaxScreenshotWindowViewModel viewModel = new MaxScreenshotWindowViewModel();
+        var bitmap = ImageHelpers.SnapshotScreen();
+        MaxScreenshotWindowViewModel viewModel = new MaxScreenshotWindowViewModel()
+        {
+            ScreenBitmap = bitmap,
+        };
         var screenShot = new MaxScreenshotWindow(ref viewModel);
         screenShot.Show();
 
     }
 
-    /// <summary>
-    /// 截图事件
-    /// </summary>
-    private void Screenshot_Snapped(object? sender, HandyControl.Data.FunctionEventArgs<ImageSource> e)
-    {
-        if (e.Info != null)
-        {
-            textExtract(ImageConvert.ImageSourceToBitmap(e.Info));
-        }
-    }
 
     private void textExtract(Bitmap bitmap)
     {
