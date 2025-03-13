@@ -1,3 +1,3 @@
-Ô¤ÀÀÐ§¹û
+é¢„è§ˆæ•ˆæžœ
 
-![OcrTextExtract.gif](mycut.gif)
+![OcrTextExtract.gif](~/mycut.gif)
