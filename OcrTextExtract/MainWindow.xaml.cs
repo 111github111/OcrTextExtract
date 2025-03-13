@@ -3,6 +3,7 @@ using HandyControl.Tools.Extension;
 using Microsoft.Win32;
 using OcrTextExtract.Converters;
 using OcrTextExtract.Helpers;
+using OcrTextExtract.ViewModels;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -16,6 +17,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using OcrTextExtract.ViewModels;
 
 namespace OcrTextExtract;
 
@@ -57,8 +59,14 @@ public partial class MainWindow : System.Windows.Window
     /// </summary>
     private void btnCutExtract_Click(object sender, RoutedEventArgs e)
     {
-        var screen = new Screenshot();
-        screen.Start();
+        // var screen = new Screenshot();
+        // screen.Start();
+
+
+        MaxScreenshotWindowViewModel viewModel = new MaxScreenshotWindowViewModel();
+        var screenShot = new MaxScreenshotWindow(ref viewModel);
+        screenShot.Show();
+
     }
 
     /// <summary>
