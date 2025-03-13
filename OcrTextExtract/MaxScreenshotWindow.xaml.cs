@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using HandyControl.Tools.Extension;
 using OcrTextExtract.Converters;
 using OcrTextExtract.Helpers;
 using OcrTextExtract.ViewModels;
@@ -27,6 +28,8 @@ namespace OcrTextExtract
         private StackPanel rightPanel = null;
         private StackPanel bottomPanel = null;
 
+        private StackPanel toolsPanel = null;
+
         public MaxScreenshotWindow(ref MaxScreenshotWindowViewModel viewModel)
         {
             _viewModel = viewModel;
@@ -48,7 +51,21 @@ namespace OcrTextExtract
         private void MaxScreenshotWindow_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             // 获取鼠标相对于窗口的位置
-            // var point = this.point1 = e.GetPosition(this);
+            var point = e.GetPosition(this);
+
+
+            // 如果鼠标点是落在工具栏, 则不做截图处理
+
+            var tsPoint1 = new Point(this.toolsPanel.Margin.Left, this.toolsPanel.Margin.Top);
+            var tsPoint2 = new Point(tsPoint1.X + this.toolsPanel.Width, tsPoint1.Y + this.toolsPanel.Height);
+
+            // 落点 x, y 若是都在工具栏上的话
+            if (point.X >= tsPoint1.X && point.X <= tsPoint2.X &&
+                point.Y >= tsPoint1.Y && point.Y <= tsPoint2.Y)
+            {
+                return;
+            }
+
 
 
             // 设置背景图片
@@ -57,29 +74,40 @@ namespace OcrTextExtract
             this.Background = brush;
 
 
-            // 初始化或重置参数 
+            // 初始化或重置参数
             this.IsMouseDown = true;
+
+            // 剪切面板
             this.cutPanel = ElementHelpers.CreateNewStackPanel(Colors.Transparent);
             this.cutPanelMargin = new Thickness(0, 0, 0, 0);
-
+            // 遮罩面板
             var myColor = (Color)ColorConverter.ConvertFromString("#33222222");
             this.topPanel = ElementHelpers.CreateNewStackPanel(myColor);
             this.leftPanel = ElementHelpers.CreateNewStackPanel(myColor);
             this.rightPanel = ElementHelpers.CreateNewStackPanel(myColor);
             this.bottomPanel = ElementHelpers.CreateNewStackPanel(myColor);
+            // 工具面板
+            this.toolsPanel = ElementHelpers.CreateNewStackPanel(Colors.AliceBlue);
 
+            // 清空上次操作遗留组件
             this.screenBox.Children.Clear();
             this.screenBox.Background = new SolidColorBrush(Colors.Transparent);
 
+            // 添加-剪切面板
             this.screenBox.Children.Add(this.cutPanel);
-
+            // 添加-遮罩面板
             this.screenBox.Children.Add(this.topPanel);
             this.screenBox.Children.Add(this.leftPanel);
             this.screenBox.Children.Add(this.rightPanel);
             this.screenBox.Children.Add(this.bottomPanel);
+            // 添加-工具面板
+            this.screenBox.Children.Add(this.toolsPanel);
 
-            this.SetPanelRectangle(MouseState.Down, e.GetPosition(this));
-            this.SetOverlayRectangle(MouseState.Down, e.GetPosition(this));
+
+            // 计算剪切面板、遮罩与工具面板的位置
+            this.SetPanelRectangle(MouseState.Down, point);
+            this.SetOverlayRectangle(MouseState.Down, point);
+            this.SetToolsPostion(MouseState.Down, point);
         }
 
         /// <summary>
@@ -90,8 +118,12 @@ namespace OcrTextExtract
             // 按下鼠标后, 移动操作才属于有效操作
             if (IsMouseDown)
             {
-                this.SetPanelRectangle(MouseState.Move, e.GetPosition(this));
-                this.SetOverlayRectangle(MouseState.Move, e.GetPosition(this));
+                // 获取鼠标相对于窗口的位置
+                var point = e.GetPosition(this);
+
+                this.SetPanelRectangle(MouseState.Move, point);
+                this.SetOverlayRectangle(MouseState.Move, point);
+                this.SetToolsPostion(MouseState.Move, point);
             }
         }
 
@@ -100,29 +132,17 @@ namespace OcrTextExtract
         /// </summary>
         private void MaxScreenshotWindow_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            this.IsMouseDown = false;
-            this.SetPanelRectangle(MouseState.Up, e.GetPosition(this));
-            this.SetOverlayRectangle(MouseState.Up, e.GetPosition(this));
+            if (IsMouseDown)
+            {
+                // 获取鼠标相对于窗口的位置
+                var point = e.GetPosition(this);
 
+                this.SetPanelRectangle(MouseState.Up, point);
+                this.SetOverlayRectangle(MouseState.Up, point);
+                this.SetToolsPostion(MouseState.Up, point);
 
-            // if (!IsMouseUp)
-            // {
-            //     WrapPanel_Btns.Visibility = Visibility.Visible;
-            // 
-            //     //当所选的截图区域不大时，按钮区直接在其下方显示
-            //     if (Rect_RealScreen.Y + Rect_RealScreen.Height + this.WrapPanel_Btns.ActualHeight < SystemParameters.PrimaryScreenHeight)
-            //     {
-            //         Canvas.SetRight(this.WrapPanel_Btns, Rectangle_Right.Width);
-            //         Canvas.SetBottom(this.WrapPanel_Btns, Rectangle_Bottom.Height - this.WrapPanel_Btns.ActualHeight - 4);
-            //     }
-            //     else //当鼠标选择区域大到一定程度时，设置按钮选择区的位置到选择区域内左上角
-            //     {
-            //         Canvas.SetLeft(this.WrapPanel_Btns, Rect_RealScreen.X + 4);
-            //         Canvas.SetTop(this.WrapPanel_Btns, Rect_RealScreen.Y + 4);
-            //     }
-            // 
-            //     IsMouseUp = true;
-            // }
+                this.IsMouseDown = false;
+            }
         }
 
         /// <summary>
@@ -188,6 +208,30 @@ namespace OcrTextExtract
             this.bottomPanel.Height = this.Height - point.Y + 20;  // +20 避免像素计算时出现问题
             this.bottomPanel.Margin = new Thickness(0, this.cutPanelMargin.Top +  this.cutPanel.Height, 0, 0);
 
+        }
+
+        /// <summary>
+        /// 工具面板位置处理
+        /// </summary>
+        private void SetToolsPostion(MouseState state, Point point)
+        {
+            if (state == MouseState.Down)
+            {
+                this.toolsPanel.Hide();
+                this.toolsPanel.Height = 0;
+            }
+
+            if (state== MouseState.Up)
+            {
+                this.toolsPanel.Width = 200;
+                this.toolsPanel.Height = 32;
+
+                var mLeft = this.cutPanelMargin.Left + this.cutPanel.Width - this.toolsPanel.Width;
+                var mTop = this.cutPanelMargin.Top + this.cutPanel.Height + 10;
+                this.toolsPanel.Margin = new Thickness(mLeft, mTop, 0, 0);
+
+                this.toolsPanel.Show();
+            }
         }
 
         /// <summary>
