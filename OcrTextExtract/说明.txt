@@ -1,0 +1,11 @@
+﻿	
+	参考：https://blog.csdn.net/qq_44121554/article/details/130598547
+
+	tessdata-main 资源来源：
+		https://github.com/tesseract-ocr/tessdata
+
+
+	截图参考：
+		https://github.com/siukwan/screenshot
+		https://github.com/HandyOrg/HandyScreenshot
+

@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35825.156
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OcrTextExtract", "OcrTextExtract\OcrTextExtract.csproj", "{BD6C883F-9ED6-42C3-ABD2-3969DEAACA2F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BD6C883F-9ED6-42C3-ABD2-3969DEAACA2F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BD6C883F-9ED6-42C3-ABD2-3969DEAACA2F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BD6C883F-9ED6-42C3-ABD2-3969DEAACA2F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BD6C883F-9ED6-42C3-ABD2-3969DEAACA2F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {59198883-7624-48EF-B3FE-B472DD47B108}
+	EndGlobalSection
+EndGlobal
