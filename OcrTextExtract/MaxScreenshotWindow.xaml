@@ -16,6 +16,17 @@
     -->
 
     <Grid Name="screenBox" Background="#33222222">
+
+
+        <!--
+        
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" FlowDirection="RightToLeft" Width="100">
+            <StackPanel Width="20" Height="20" Background="AliceBlue"></StackPanel>
+            <StackPanel Width="20" Height="20" Background="Beige"></StackPanel>
+        </StackPanel>
+        
+        -->
+        
         
     </Grid>
 </Window>

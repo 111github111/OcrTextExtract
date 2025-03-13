@@ -17,7 +17,6 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using OcrTextExtract.ViewModels;
 
 namespace OcrTextExtract;
 
@@ -67,16 +66,37 @@ public partial class MainWindow : System.Windows.Window
 
 
         var bitmap = ImageHelpers.SnapshotScreen();
-        MaxScreenshotWindowViewModel viewModel = new MaxScreenshotWindowViewModel()
-        {
-            ScreenBitmap = bitmap,
-        };
+        MaxScreenshotWindowViewModel viewModel = new MaxScreenshotWindowViewModel(bitmap);
+        viewModel.OnSaveEvent += ViewModel_OnSaveEvent;
+        viewModel.OnCancelEvent += ViewModel_OnCancelEvent;
+
         var screenShot = new MaxScreenshotWindow(ref viewModel);
         screenShot.Show();
 
     }
 
+    /// <summary>
+    /// 保存
+    /// </summary>
+    private void ViewModel_OnSaveEvent(Bitmap bitmap)
+    {
+        this.Show();
+        this.textExtract(bitmap);
+    }
 
+    /// <summary>
+    /// 取消
+    /// </summary>
+    private void ViewModel_OnCancelEvent(object obj)
+    {
+        this.Show();
+    }
+
+
+
+    /// <summary>
+    /// 文字提取
+    /// </summary>
     private void textExtract(Bitmap bitmap)
     {
         try
@@ -101,7 +121,4 @@ public partial class MainWindow : System.Windows.Window
     {
         this.Title = winTitle + " - 识别失败, ex = " + ex.Message;
     }
-
-
-
 }

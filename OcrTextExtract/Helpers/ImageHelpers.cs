@@ -2,7 +2,7 @@
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Windows;
-using System.Windows.Media.Imaging;
+using System.Windows.Interop;
 
 namespace OcrTextExtract.Helpers
 {
@@ -26,12 +26,25 @@ namespace OcrTextExtract.Helpers
             return bitmap;
         }
 
+        public static Bitmap Snapshot(System.Windows.Point p1, System.Windows.Point p2)
+        {
+            double currentGraphics = Graphics.FromHwnd(new WindowInteropHelper(Application.Current.MainWindow).Handle).DpiX / 96;
+            int x1 = (int)(p1.X * currentGraphics);
+            int y1 = (int)(p1.Y * currentGraphics);
+            int x2 = (int)(p2.X * currentGraphics);
+            int y2 = (int)(p2.Y * currentGraphics);
+            return Snapshot(x1, y1, x2, y2);
+
+            // return Snapshot((int)p1.X, (int)p1.Y, (int)p2.X, (int)p2.Y);
+        }
+
+
         /// <summary>
         /// 屏幕截图
         /// </summary>
         public static Bitmap SnapshotScreen()
         {
-            double currentGraphics = Graphics.FromHwnd(new System.Windows.Interop.WindowInteropHelper(Application.Current.MainWindow).Handle).DpiX / 96;
+            double currentGraphics = Graphics.FromHwnd(new WindowInteropHelper(Application.Current.MainWindow).Handle).DpiX / 96;
             double screenWidth = SystemParameters.PrimaryScreenWidth * currentGraphics;
             double screenHeight = SystemParameters.PrimaryScreenHeight * currentGraphics;
             return Snapshot(0, 0, (int)screenWidth, (int)screenHeight);

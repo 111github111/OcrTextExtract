@@ -3,7 +3,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using HandyControl.Tools.Extension;
 using OcrTextExtract.Converters;
 using OcrTextExtract.Helpers;
@@ -41,9 +40,24 @@ namespace OcrTextExtract
             this.PreviewMouseMove += MaxScreenshotWindow_PreviewMouseMove;
             this.PreviewMouseLeftButtonUp += MaxScreenshotWindow_PreviewMouseLeftButtonUp;
 
+            this.KeyDown += MaxScreenshotWindow_KeyDown;
+
+        }
+
+        /// <summary>
+        /// esc 键关闭截图
+        /// </summary>
+        private void MaxScreenshotWindow_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                this.Close();
+                _viewModel.OnCancel(e);
+            }
         }
 
         private bool IsMouseDown = false;
+        private const double toolOrBtnHeight = 32;
 
         /// <summary>
         /// 鼠标按下
@@ -55,15 +69,17 @@ namespace OcrTextExtract
 
 
             // 如果鼠标点是落在工具栏, 则不做截图处理
-
-            var tsPoint1 = new Point(this.toolsPanel.Margin.Left, this.toolsPanel.Margin.Top);
-            var tsPoint2 = new Point(tsPoint1.X + this.toolsPanel.Width, tsPoint1.Y + this.toolsPanel.Height);
-
-            // 落点 x, y 若是都在工具栏上的话
-            if (point.X >= tsPoint1.X && point.X <= tsPoint2.X &&
-                point.Y >= tsPoint1.Y && point.Y <= tsPoint2.Y)
+            if (this.toolsPanel != null)
             {
-                return;
+                var tsPoint1 = new Point(this.toolsPanel.Margin.Left, this.toolsPanel.Margin.Top);
+                var tsPoint2 = new Point(tsPoint1.X + this.toolsPanel.Width, tsPoint1.Y + this.toolsPanel.Height);
+
+                // 落点 x, y 若是都在工具栏上的话
+                if (point.X >= tsPoint1.X && point.X <= tsPoint2.X &&
+                    point.Y >= tsPoint1.Y && point.Y <= tsPoint2.Y)
+                {
+                    return;
+                }
             }
 
 
@@ -87,7 +103,36 @@ namespace OcrTextExtract
             this.rightPanel = ElementHelpers.CreateNewStackPanel(myColor);
             this.bottomPanel = ElementHelpers.CreateNewStackPanel(myColor);
             // 工具面板
-            this.toolsPanel = ElementHelpers.CreateNewStackPanel(Colors.AliceBlue);
+            this.toolsPanel = ElementHelpers.CreateTools(Colors.AliceBlue);
+            // 工具面板-添加按钮
+            {
+                var saveBtn = ElementHelpers.CreateLabel("save", 60, toolOrBtnHeight, 0, Colors.Beige);
+                var cancelBtn = ElementHelpers.CreateLabel("cancel", 60, toolOrBtnHeight, 60, Colors.Pink);
+
+                this.toolsPanel.Children.Add(saveBtn);
+                this.toolsPanel.Children.Add(cancelBtn);
+
+                // 保存
+                saveBtn.MouseUp += (object sender, MouseButtonEventArgs e) =>
+                {
+                    // 偏移像素
+                    int offset = -6;
+
+                    var cutPoint1 = new Point(this.cutPanelMargin.Left + offset, this.cutPanelMargin.Top + offset);
+                    var cutPoint2 = new Point(this.cutPanel.Width, this.cutPanel.Height);
+                    var bitmap = ImageHelpers.Snapshot(cutPoint1, cutPoint2);
+                    this.Close();
+                    _viewModel.OnSave(bitmap);
+                };
+
+                // 取消
+                cancelBtn.MouseUp += (object sender, MouseButtonEventArgs e) =>
+                {
+                    this.Close();
+                    _viewModel.OnCancel(e);
+                };
+            }
+
 
             // 清空上次操作遗留组件
             this.screenBox.Children.Clear();
@@ -224,7 +269,7 @@ namespace OcrTextExtract
             if (state== MouseState.Up)
             {
                 this.toolsPanel.Width = 200;
-                this.toolsPanel.Height = 32;
+                this.toolsPanel.Height = toolOrBtnHeight;
 
                 var mLeft = this.cutPanelMargin.Left + this.cutPanel.Width - this.toolsPanel.Width;
                 var mTop = this.cutPanelMargin.Top + this.cutPanel.Height + 10;

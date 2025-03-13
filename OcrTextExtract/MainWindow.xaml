@@ -17,8 +17,8 @@
         <Grid Grid.Column="0">
 
             <Grid.RowDefinitions>
-                <RowDefinition Height="50*" />
-                <RowDefinition Height="50*" />
+                <RowDefinition Height="64*" />
+                <RowDefinition Height="36*" />
             </Grid.RowDefinitions>
 
             <Grid Grid.Row="0" Background="AliceBlue">
@@ -32,8 +32,8 @@
 
         <Grid Grid.Column="1">
             <StackPanel Margin="8" Orientation="Vertical" HorizontalAlignment="Center">
-                <Button Width="90" Height="36" Margin="0,0,0,0" Name="btnLoadingExtract" Content="加载图片识别" Click="btnLoadingExtract_Click" />
-                <Button Width="90" Height="36" Margin="0,15,0,0" Name="btnCutExtract" Content="区域截图识别" Click="btnCutExtract_Click" />
+                <Button Width="100" Height="36" Margin="0,0,0,0" Name="btnLoadingExtract" Content="加载图片识别" Click="btnLoadingExtract_Click" />
+                <Button Width="100" Height="36" Margin="0,15,0,0" Name="btnCutExtract" Content="区域截图识别" Click="btnCutExtract_Click" />
             </StackPanel>
         </Grid>
 
