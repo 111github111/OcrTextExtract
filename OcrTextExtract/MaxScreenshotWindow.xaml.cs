@@ -41,7 +41,18 @@ namespace OcrTextExtract
             this.PreviewMouseLeftButtonUp += MaxScreenshotWindow_PreviewMouseLeftButtonUp;
 
             this.KeyDown += MaxScreenshotWindow_KeyDown;
+            this.Closing += MaxScreenshotWindow_Closing;
 
+        }
+
+        private bool IsMouseDown = false;
+        private const double toolOrBtnHeight = 32;
+        private CloseEnum myClose = CloseEnum.ExitApp; // 非操作关闭, 则表示关闭程序
+
+
+        private void MaxScreenshotWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+        {
+            _viewModel.OnCancel(myClose);
         }
 
         /// <summary>
@@ -51,13 +62,10 @@ namespace OcrTextExtract
         {
             if (e.Key == Key.Escape)
             {
+                myClose = CloseEnum.CloseWindow;
                 this.Close();
-                _viewModel.OnCancel(e);
             }
         }
-
-        private bool IsMouseDown = false;
-        private const double toolOrBtnHeight = 32;
 
         /// <summary>
         /// 鼠标按下
@@ -121,6 +129,8 @@ namespace OcrTextExtract
                     var cutPoint1 = new Point(this.cutPanelMargin.Left + offset, this.cutPanelMargin.Top + offset);
                     var cutPoint2 = new Point(this.cutPanel.Width, this.cutPanel.Height);
                     var bitmap = ImageHelpers.Snapshot(cutPoint1, cutPoint2);
+
+                    myClose = CloseEnum.CloseWindow;
                     this.Close();
                     _viewModel.OnSave(bitmap);
                 };
@@ -128,8 +138,8 @@ namespace OcrTextExtract
                 // 取消
                 cancelBtn.MouseUp += (object sender, MouseButtonEventArgs e) =>
                 {
+                    myClose = CloseEnum.CloseWindow;
                     this.Close();
-                    _viewModel.OnCancel(e);
                 };
             }
 

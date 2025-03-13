@@ -21,10 +21,16 @@ namespace OcrTextExtract.ViewModels
 
 
         public event Action<Bitmap> OnSaveEvent = null;
-        public event Action<object> OnCancelEvent = null;
+        public event Action<CloseEnum> OnCancelEvent = null;
 
 
         public void OnSave(Bitmap o) => this.OnSaveEvent?.Invoke(o);
-        public void OnCancel(object o) => this.OnCancelEvent?.Invoke(o);
+        public void OnCancel(CloseEnum o) => this.OnCancelEvent?.Invoke(o);
+    }
+
+    public enum CloseEnum
+    {
+        CloseWindow, // 表示 操作完毕后关闭 当前窗口
+        ExitApp,     // 表示 从任务管理器，状态栏 等地方关闭的窗口，则退出程序
     }
 }

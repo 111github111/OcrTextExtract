@@ -32,6 +32,12 @@ public partial class MainWindow : System.Windows.Window
     {
         InitializeComponent();
         this.Loaded += MainWindow_Loaded;
+        this.Closing += MainWindow_Closing;
+    }
+
+    private void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        Application.Current.Shutdown();
     }
 
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -87,9 +93,16 @@ public partial class MainWindow : System.Windows.Window
     /// <summary>
     /// 取消
     /// </summary>
-    private void ViewModel_OnCancelEvent(object obj)
+    private void ViewModel_OnCancelEvent(CloseEnum state)
     {
-        this.Show();
+        if (state == CloseEnum.CloseWindow)
+        {
+            this.Show();
+        }
+        else
+        {
+            this.Close();
+        }
     }
 
 
