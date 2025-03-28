@@ -1,8 +1,10 @@
-﻿using System;
+﻿using System.IO;
+using System.Drawing.Imaging;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using Microsoft.Win32;
 using OcrTextExtract.Converters;
 using OcrTextExtract.Extionsions;
 using OcrTextExtract.Helpers;
@@ -27,7 +29,7 @@ namespace OcrTextExtract
         private StackPanel rightPanel = null;
         private StackPanel bottomPanel = null;
 
-        private StackPanel toolsPanel = null;
+        private ToolControl tools = null;
 
         public MaxScreenshotWindow(ref MaxScreenshotWindowViewModel viewModel)
         {
@@ -88,10 +90,10 @@ namespace OcrTextExtract
 
 
             // 如果鼠标点是落在工具栏, 则不做截图处理
-            if (this.toolsPanel != null)
+            if (this.tools != null)
             {
-                var tsPoint1 = new Point(this.toolsPanel.Margin.Left, this.toolsPanel.Margin.Top);
-                var tsPoint2 = new Point(tsPoint1.X + this.toolsPanel.Width, tsPoint1.Y + this.toolsPanel.Height);
+                var tsPoint1 = new Point(this.tools.Margin.Left, this.tools.Margin.Top);
+                var tsPoint2 = new Point(tsPoint1.X + this.tools.Width, tsPoint1.Y + this.tools.Height);
 
                 // 落点 x, y 若是都在工具栏上的话
                 if (point.X >= tsPoint1.X && point.X <= tsPoint2.X &&
@@ -113,41 +115,57 @@ namespace OcrTextExtract
             this.IsMouseDown = true;
 
             // 剪切面板
-            this.cutPanel = ElementHelpers.CreateNewStackPanel(Colors.Transparent);
+            this.cutPanel = ElementHelpers.CreateMask(Colors.Transparent);
             this.cutPanelMargin = new Thickness(0, 0, 0, 0);
             // 遮罩面板
-            this.topPanel = ElementHelpers.CreateNewStackPanel(_viewModel.Styles.MaskBackgroundColor);
-            this.leftPanel = ElementHelpers.CreateNewStackPanel(_viewModel.Styles.MaskBackgroundColor);
-            this.rightPanel = ElementHelpers.CreateNewStackPanel(_viewModel.Styles.MaskBackgroundColor);
-            this.bottomPanel = ElementHelpers.CreateNewStackPanel(_viewModel.Styles.MaskBackgroundColor);
+            this.topPanel = ElementHelpers.CreateMask(_viewModel.Styles.MaskBackgroundColor);
+            this.leftPanel = ElementHelpers.CreateMask(_viewModel.Styles.MaskBackgroundColor);
+            this.rightPanel = ElementHelpers.CreateMask(_viewModel.Styles.MaskBackgroundColor);
+            this.bottomPanel = ElementHelpers.CreateMask(_viewModel.Styles.MaskBackgroundColor);
             // 工具面板
-            this.toolsPanel = ElementHelpers.CreateTools(_viewModel.Styles.ToolBackgroundColor);
+            this.tools = new ToolControl(_viewModel);
             // 工具面板-添加按钮
             {
-                var saveBtn = ElementHelpers.CreateLabel("save", 60, _viewModel.Styles.ToolPanelButtonHeight, 0, Colors.Beige);
-                var cancelBtn = ElementHelpers.CreateLabel("cancel", 60, _viewModel.Styles.ToolPanelButtonHeight, 60, Colors.Pink);
-
-                this.toolsPanel.Children.Add(saveBtn);
-                this.toolsPanel.Children.Add(cancelBtn);
-
                 // 保存
-                saveBtn.MouseUp += (object sender, MouseButtonEventArgs e) =>
+                this.tools.BtnOK.MouseUp += (object sender, MouseButtonEventArgs e) =>
                 {
-                    // 偏移像素
-                    int offset = -6;
-
-                    var cutPoint1 = new Point(this.cutPanelMargin.Left + offset, this.cutPanelMargin.Top + offset);
-                    var cutPoint2 = new Point(this.cutPanel.Width, this.cutPanel.Height);
-                    var bitmap = ImageHelpers.Snapshot(cutPoint1, cutPoint2);
 
                     myClose = CloseEnum.CloseWindow;
                     this.Close();
-                    _viewModel.OnSave(bitmap);
+                    _viewModel.OnSave(CutImage());
                 };
 
                 // 取消
-                cancelBtn.MouseUp += (object sender, MouseButtonEventArgs e) =>
+                this.tools.BtnCancel.MouseUp += (object sender, MouseButtonEventArgs e) =>
                 {
+                    myClose = CloseEnum.CloseWindow;
+                    this.Close();
+                };
+
+                // 下载 or 另存为
+                this.tools.BtnSaveAs.MouseUp += (object sender, MouseButtonEventArgs e) =>
+                {
+                    var bitmap = CutImage();
+
+                    SaveFileDialog saveFile = new SaveFileDialog();
+                    saveFile.Filter = "png files (*.png)|*.png|jpeg files (*.jpeg)|*.jpeg|bmp files (*.bmp)|*.bmp";
+                    saveFile.DefaultExt = ".png";
+                    saveFile.FileName = "cut.png";
+                    if (saveFile.ShowDialog() == true)
+                    {
+                        // 格式处理
+                        var extName = Path.GetExtension(saveFile.FileName);
+                        var format = extName switch
+                        {
+                            ".jpeg" or ".jpg" => ImageFormat.Jpeg,
+                            ".png" => ImageFormat.Png,
+                            ".bmp" => ImageFormat.Bmp,
+                            _ => ImageFormat.Jpeg
+                        };
+
+                        bitmap.Save(saveFile.FileName, format);
+                    }
+
                     myClose = CloseEnum.CloseWindow;
                     this.Close();
                 };
@@ -166,7 +184,7 @@ namespace OcrTextExtract
             this.screenBox.Children.Add(this.rightPanel);
             this.screenBox.Children.Add(this.bottomPanel);
             // 添加-工具面板
-            this.screenBox.Children.Add(this.toolsPanel);
+            this.screenBox.Children.Add(this.tools);
 
 
             // 计算剪切面板、遮罩与工具面板的位置
@@ -209,6 +227,19 @@ namespace OcrTextExtract
                 this.IsMouseDown = false;
             }
         }
+
+
+
+        private System.Drawing.Bitmap CutImage()
+        {
+            // 偏移像素
+            int offset = -6;
+
+            var cutPoint1 = new Point(this.cutPanelMargin.Left + offset, this.cutPanelMargin.Top + offset);
+            var cutPoint2 = new Point(this.cutPanel.Width, this.cutPanel.Height);
+            return ImageHelpers.Snapshot(cutPoint1, cutPoint2);
+        }
+
 
         /// <summary>
         /// 剪切面板处理
@@ -282,20 +313,17 @@ namespace OcrTextExtract
         {
             if (state == MouseState.Down)
             {
-                this.toolsPanel.Hide();
-                this.toolsPanel.Height = 0;
+                this.tools.Hide();
+                this.tools.Height = 0;
             }
 
             if (state== MouseState.Up)
             {
-                this.toolsPanel.Width = _viewModel.Styles.ToolPanelWidth;
-                this.toolsPanel.Height = _viewModel.Styles.ToolPanelHeight;
-
-                var mLeft = this.cutPanelMargin.Left + this.cutPanel.Width - this.toolsPanel.Width;
+                var mLeft = this.cutPanelMargin.Left + this.cutPanel.Width - this.tools.Width;
                 var mTop = this.cutPanelMargin.Top + this.cutPanel.Height + 10;
-                this.toolsPanel.Margin = new Thickness(mLeft, mTop, 0, 0);
+                this.tools.Margin = new Thickness(Math.Max(mLeft, 20), mTop, 0, 0);
 
-                this.toolsPanel.Show();
+                this.tools.Show();
             }
         }
 

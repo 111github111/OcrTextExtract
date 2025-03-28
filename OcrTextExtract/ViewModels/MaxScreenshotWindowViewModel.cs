@@ -45,11 +45,13 @@ namespace OcrTextExtract.ViewModels
 
         public event Action<Bitmap> OnSaveEvent = null;
         public event Action<CloseEnum> OnCancelEvent = null;
+        public event Action<Bitmap> OnSaveAsEvent = null;
 
 
         public void OnSave(Bitmap o) => this.OnSaveEvent?.Invoke(o);
 
-        public void OnCancel(CloseEnum o) => this.OnCancelEvent?.Invoke(o); 
+        public void OnCancel(CloseEnum o) => this.OnCancelEvent?.Invoke(o);
+        public void OnSaveAs(Bitmap o) => this.OnSaveAsEvent?.Invoke(o);
 
         #endregion
     }
