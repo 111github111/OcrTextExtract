@@ -15,7 +15,7 @@
         Background="#33222222"
     -->
 
-    <Grid Name="screenBox" Background="#33222222">
+    <Grid Name="screenBox">
 
 
         <!--

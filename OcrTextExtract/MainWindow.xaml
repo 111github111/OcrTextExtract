@@ -32,8 +32,8 @@
 
         <Grid Grid.Column="1">
             <StackPanel Margin="8" Orientation="Vertical" HorizontalAlignment="Center">
-                <Button Width="100" Height="36" Margin="0,0,0,0" Name="btnLoadingExtract" Content="加载图片识别" Click="btnLoadingExtract_Click" />
-                <Button Width="100" Height="36" Margin="0,15,0,0" Name="btnCutExtract" Content="区域截图识别" Click="btnCutExtract_Click" />
+                <Button Style="{StaticResource btnStyle}" Margin="0,0,0,0" Name="btnLoadingExtract" Content="加载图片识别" Click="btnLoadingExtract_Click" />
+                <Button Style="{StaticResource btnStyle}" Margin="0,15,0,0" Name="btnCutExtract" Content="区域截图识别" Click="btnCutExtract_Click" />
             </StackPanel>
         </Grid>
 

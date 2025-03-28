@@ -59,6 +59,9 @@ namespace OcrTextExtract.Helpers
             label.HorizontalAlignment = HorizontalAlignment.Right;
             label.VerticalAlignment = VerticalAlignment.Top;
             label.Margin = new Thickness(0, 0, marginRight, 0);
+            label.BorderThickness = new Thickness(0, 0, 0, 0);
+            label.HorizontalContentAlignment = HorizontalAlignment.Center;
+            label.VerticalContentAlignment = VerticalAlignment.Center;
 
             return label;
         }

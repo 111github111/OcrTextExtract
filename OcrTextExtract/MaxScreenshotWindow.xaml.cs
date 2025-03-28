@@ -3,8 +3,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using HandyControl.Tools.Extension;
 using OcrTextExtract.Converters;
+using OcrTextExtract.Extionsions;
 using OcrTextExtract.Helpers;
 using OcrTextExtract.ViewModels;
 
@@ -35,6 +35,8 @@ namespace OcrTextExtract
 
             InitializeComponent();
 
+            this.Loaded += MaxScreenshotWindow_Loaded;
+
             // 执行顺序: down -> move -> up
             this.PreviewMouseLeftButtonDown += MaxScreenshotWindow_PreviewMouseLeftButtonDown;
             this.PreviewMouseMove += MaxScreenshotWindow_PreviewMouseMove;
@@ -43,6 +45,15 @@ namespace OcrTextExtract
             this.KeyDown += MaxScreenshotWindow_KeyDown;
             this.Closing += MaxScreenshotWindow_Closing;
 
+        }
+
+        /// <summary>
+        /// 截图窗口初始化完毕
+        /// </summary>
+        private void MaxScreenshotWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            // 设置截图窗口背景颜色
+            screenBox.Background = new SolidColorBrush(_viewModel.Styles.MaskBackgroundColor);
         }
 
         private bool IsMouseDown = false;
@@ -105,17 +116,16 @@ namespace OcrTextExtract
             this.cutPanel = ElementHelpers.CreateNewStackPanel(Colors.Transparent);
             this.cutPanelMargin = new Thickness(0, 0, 0, 0);
             // 遮罩面板
-            var myColor = (Color)ColorConverter.ConvertFromString("#33222222");
-            this.topPanel = ElementHelpers.CreateNewStackPanel(myColor);
-            this.leftPanel = ElementHelpers.CreateNewStackPanel(myColor);
-            this.rightPanel = ElementHelpers.CreateNewStackPanel(myColor);
-            this.bottomPanel = ElementHelpers.CreateNewStackPanel(myColor);
+            this.topPanel = ElementHelpers.CreateNewStackPanel(_viewModel.Styles.MaskBackgroundColor);
+            this.leftPanel = ElementHelpers.CreateNewStackPanel(_viewModel.Styles.MaskBackgroundColor);
+            this.rightPanel = ElementHelpers.CreateNewStackPanel(_viewModel.Styles.MaskBackgroundColor);
+            this.bottomPanel = ElementHelpers.CreateNewStackPanel(_viewModel.Styles.MaskBackgroundColor);
             // 工具面板
-            this.toolsPanel = ElementHelpers.CreateTools(Colors.AliceBlue);
+            this.toolsPanel = ElementHelpers.CreateTools(_viewModel.Styles.ToolBackgroundColor);
             // 工具面板-添加按钮
             {
-                var saveBtn = ElementHelpers.CreateLabel("save", 60, toolOrBtnHeight, 0, Colors.Beige);
-                var cancelBtn = ElementHelpers.CreateLabel("cancel", 60, toolOrBtnHeight, 60, Colors.Pink);
+                var saveBtn = ElementHelpers.CreateLabel("save", 60, _viewModel.Styles.ToolPanelButtonHeight, 0, Colors.Beige);
+                var cancelBtn = ElementHelpers.CreateLabel("cancel", 60, _viewModel.Styles.ToolPanelButtonHeight, 60, Colors.Pink);
 
                 this.toolsPanel.Children.Add(saveBtn);
                 this.toolsPanel.Children.Add(cancelBtn);
@@ -278,8 +288,8 @@ namespace OcrTextExtract
 
             if (state== MouseState.Up)
             {
-                this.toolsPanel.Width = 200;
-                this.toolsPanel.Height = toolOrBtnHeight;
+                this.toolsPanel.Width = _viewModel.Styles.ToolPanelWidth;
+                this.toolsPanel.Height = _viewModel.Styles.ToolPanelHeight;
 
                 var mLeft = this.cutPanelMargin.Left + this.cutPanel.Width - this.toolsPanel.Width;
                 var mTop = this.cutPanelMargin.Top + this.cutPanel.Height + 10;

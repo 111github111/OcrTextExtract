@@ -1,22 +1,12 @@
-﻿using HandyControl.Controls;
-using HandyControl.Tools.Extension;
-using Microsoft.Win32;
+﻿using Microsoft.Win32;
 using OcrTextExtract.Converters;
 using OcrTextExtract.Helpers;
 using OcrTextExtract.ViewModels;
-using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Text;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace OcrTextExtract;
 
@@ -54,7 +44,7 @@ public partial class MainWindow : System.Windows.Window
         OpenFileDialog dialog = new OpenFileDialog();
         if (dialog.ShowDialog() == true)
         {
-            this.textExtract(new Bitmap(dialog.FileName));
+            this.textExtract(new System.Drawing.Bitmap(dialog.FileName));
         }
     }
 
@@ -75,6 +65,12 @@ public partial class MainWindow : System.Windows.Window
         MaxScreenshotWindowViewModel viewModel = new MaxScreenshotWindowViewModel(bitmap);
         viewModel.OnSaveEvent += ViewModel_OnSaveEvent;
         viewModel.OnCancelEvent += ViewModel_OnCancelEvent;
+        viewModel.SetStyles(s =>
+        {
+            // s.ToolBackgroundColor = ColorHelpers.FromString("#F2F2F2");
+        });
+
+
 
         var screenShot = new MaxScreenshotWindow(ref viewModel);
         screenShot.Show();
@@ -84,7 +80,7 @@ public partial class MainWindow : System.Windows.Window
     /// <summary>
     /// 保存
     /// </summary>
-    private void ViewModel_OnSaveEvent(Bitmap bitmap)
+    private void ViewModel_OnSaveEvent(System.Drawing.Bitmap bitmap)
     {
         this.Show();
         this.textExtract(bitmap);
@@ -110,7 +106,7 @@ public partial class MainWindow : System.Windows.Window
     /// <summary>
     /// 文字提取
     /// </summary>
-    private void textExtract(Bitmap bitmap)
+    private void textExtract(System.Drawing.Bitmap bitmap)
     {
         try
         {
