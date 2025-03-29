@@ -1,9 +1,8 @@
-﻿using OcrTextExtract.ViewModels;
-using System;
+﻿using ScreenshotCapture.ViewModels;
 using System.Windows.Controls;
 using System.Windows.Media;
 
-namespace OcrTextExtract
+namespace ScreenshotCapture
 {
     /// <summary>
     /// ToolControl.xaml 的交互逻辑

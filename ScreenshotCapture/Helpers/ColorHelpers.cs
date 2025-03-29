@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Media;
 
-namespace OcrTextExtract.Helpers
+namespace ScreenshotCapture.Helpers
 {
     public class ColorHelpers
     {

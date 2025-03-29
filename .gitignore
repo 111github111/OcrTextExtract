@@ -2,3 +2,5 @@
 /OcrTextExtract/bin
 /OcrTextExtract/*.user
 /.vs
+/ScreenshotCapture/obj
+/ScreenshotCapture/bin

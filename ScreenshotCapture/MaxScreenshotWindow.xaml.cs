@@ -5,12 +5,12 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.Win32;
-using OcrTextExtract.Converters;
-using OcrTextExtract.Extionsions;
-using OcrTextExtract.Helpers;
-using OcrTextExtract.ViewModels;
+using ScreenshotCapture.Helpers;
+using ScreenshotCapture.ViewModels;
+using ScreenshotCapture.Converters;
+using ScreenshotCapture.Extionsions;
 
-namespace OcrTextExtract
+namespace ScreenshotCapture
 {
     /// <summary>
     /// MaxScreenshotWindow.xaml 的交互逻辑
@@ -30,8 +30,17 @@ namespace OcrTextExtract
         private StackPanel bottomPanel = null;
 
         private ToolControl tools = null;
+        private bool toolIsNeedHide = false; // tool 是否需要隐藏, 截图时
 
-        public MaxScreenshotWindow(ref MaxScreenshotWindowViewModel viewModel)
+
+        private bool isMouseDown = false;
+        private CloseEnum myClose = CloseEnum.ExitApp; // 非操作关闭, 则表示关闭程序
+
+
+        private WorkStateEnum workState = WorkStateEnum.Capture; // 工作状态
+
+
+        public MaxScreenshotWindow(MaxScreenshotWindowViewModel viewModel)
         {
             _viewModel = viewModel;
 
@@ -58,9 +67,6 @@ namespace OcrTextExtract
             screenBox.Background = new SolidColorBrush(_viewModel.Styles.MaskBackgroundColor);
         }
 
-        private bool IsMouseDown = false;
-        private const double toolOrBtnHeight = 32;
-        private CloseEnum myClose = CloseEnum.ExitApp; // 非操作关闭, 则表示关闭程序
 
 
         private void MaxScreenshotWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
@@ -112,7 +118,7 @@ namespace OcrTextExtract
 
 
             // 初始化或重置参数
-            this.IsMouseDown = true;
+            this.isMouseDown = true;
 
             // 剪切面板
             this.cutPanel = ElementHelpers.CreateMask(Colors.Transparent);
@@ -129,10 +135,18 @@ namespace OcrTextExtract
                 // 保存
                 this.tools.BtnOK.MouseUp += (object sender, MouseButtonEventArgs e) =>
                 {
-
-                    myClose = CloseEnum.CloseWindow;
-                    this.Close();
-                    _viewModel.OnSave(CutImage());
+                    // 1. 隐藏工具栏并延时 50 毫秒
+                    var delayMs = toolIsNeedHide ? 50 : 0;
+                    this.tools.HideDelayMs(delayMs).ContinueWith(s =>
+                    {
+                        // 2. 回到 ui 主线程, 继续执行
+                        this.Dispatcher.Invoke(() =>
+                        {
+                            myClose = CloseEnum.CloseWindow;
+                            _viewModel.OnSave(CutImage());
+                            this.Close();
+                        });
+                    });
                 };
 
                 // 取消
@@ -145,29 +159,40 @@ namespace OcrTextExtract
                 // 下载 or 另存为
                 this.tools.BtnSaveAs.MouseUp += (object sender, MouseButtonEventArgs e) =>
                 {
-                    var bitmap = CutImage();
-
-                    SaveFileDialog saveFile = new SaveFileDialog();
-                    saveFile.Filter = "png files (*.png)|*.png|jpeg files (*.jpeg)|*.jpeg|bmp files (*.bmp)|*.bmp";
-                    saveFile.DefaultExt = ".png";
-                    saveFile.FileName = "cut.png";
-                    if (saveFile.ShowDialog() == true)
+                    // 1. 隐藏工具栏并延时 50 毫秒
+                    var delayMs = toolIsNeedHide ? 50 : 0;
+                    this.tools.HideDelayMs(delayMs).ContinueWith(s =>
                     {
-                        // 格式处理
-                        var extName = Path.GetExtension(saveFile.FileName);
-                        var format = extName switch
+                        // 2. 回到 ui 主线程, 继续执行
+                        this.Dispatcher.Invoke(() =>
                         {
-                            ".jpeg" or ".jpg" => ImageFormat.Jpeg,
-                            ".png" => ImageFormat.Png,
-                            ".bmp" => ImageFormat.Bmp,
-                            _ => ImageFormat.Jpeg
-                        };
+                            var bitmap = CutImage();
 
-                        bitmap.Save(saveFile.FileName, format);
-                    }
+                            SaveFileDialog saveFile = new SaveFileDialog();
+                            saveFile.Filter = "png files (*.png)|*.png|jpeg files (*.jpeg)|*.jpeg|bmp files (*.bmp)|*.bmp";
+                            saveFile.DefaultExt = ".png";
+                            saveFile.FileName = "cut.png";
+                            if (saveFile.ShowDialog() == true)
+                            {
+                                // 格式处理
+                                var extName = Path.GetExtension(saveFile.FileName);
+                                var format = extName switch
+                                {
+                                    ".jpeg" or ".jpg" => ImageFormat.Jpeg,
+                                    ".png" => ImageFormat.Png,
+                                    ".bmp" => ImageFormat.Bmp,
+                                    _ => ImageFormat.Jpeg
+                                };
 
-                    myClose = CloseEnum.CloseWindow;
-                    this.Close();
+                                bitmap.Save(saveFile.FileName, format);
+                            }
+
+                            myClose = CloseEnum.CloseWindow;
+                            _viewModel.OnSaveAs();
+                            this.Close();
+                        });
+                    });
+
                 };
             }
 
@@ -199,7 +224,7 @@ namespace OcrTextExtract
         private void MaxScreenshotWindow_PreviewMouseMove(object sender, MouseEventArgs e)
         {
             // 按下鼠标后, 移动操作才属于有效操作
-            if (IsMouseDown)
+            if (isMouseDown)
             {
                 // 获取鼠标相对于窗口的位置
                 var point = e.GetPosition(this);
@@ -215,7 +240,7 @@ namespace OcrTextExtract
         /// </summary>
         private void MaxScreenshotWindow_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            if (IsMouseDown)
+            if (isMouseDown)
             {
                 // 获取鼠标相对于窗口的位置
                 var point = e.GetPosition(this);
@@ -224,7 +249,7 @@ namespace OcrTextExtract
                 this.SetOverlayRectangle(MouseState.Up, point);
                 this.SetToolsPostion(MouseState.Up, point);
 
-                this.IsMouseDown = false;
+                this.isMouseDown = false;
             }
         }
 
@@ -319,9 +344,37 @@ namespace OcrTextExtract
 
             if (state== MouseState.Up)
             {
-                var mLeft = this.cutPanelMargin.Left + this.cutPanel.Width - this.tools.Width;
-                var mTop = this.cutPanelMargin.Top + this.cutPanel.Height + 10;
-                this.tools.Margin = new Thickness(Math.Max(mLeft, 20), mTop, 0, 0);
+                // 底部剩余不足, 则显示在顶部
+                // 顶部剩余不足, 则显示在内部
+
+
+                // 间隙宽度
+                var gapPixel = 10;
+                // 剩余高度
+                var residueHeight = this.Height - (this.cutPanelMargin.Top + this.cutPanel.Height);
+                toolIsNeedHide = false;
+
+                if (residueHeight > 55)
+                {
+                    var mLeft = this.cutPanelMargin.Left + this.cutPanel.Width - this.tools.Width;
+                    var mTop = this.cutPanelMargin.Top + this.cutPanel.Height + gapPixel;
+                    this.tools.Margin = new Thickness(Math.Max(mLeft, 20), mTop, 0, 0);
+                }
+                else
+                {
+                    var mLeft = this.cutPanelMargin.Left + this.cutPanel.Width - this.tools.Width;
+                    var mTop = this.cutPanelMargin.Top - (_viewModel.Styles.ToolPanelHeight + gapPixel);
+                    if (mTop > 5)
+                    {
+                        this.tools.Margin = new Thickness(Math.Max(mLeft, 20), mTop, 0, 0);
+                    }
+                    else
+                    {
+                        toolIsNeedHide = true;
+                        mTop += _viewModel.Styles.ToolPanelHeight + gapPixel * 2;
+                        this.tools.Margin = new Thickness(Math.Max(mLeft, 20), mTop, 0, 0);
+                    }
+                }
 
                 this.tools.Show();
             }

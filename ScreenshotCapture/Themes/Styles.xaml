@@ -1,0 +1,54 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- 工具栏样式 -->
+    <Style TargetType="StackPanel" x:Key="toolBox">
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Background" Value="AliceBlue" />
+        <Setter Property="Orientation" Value="Horizontal" />
+        <Setter Property="FlowDirection" Value="RightToLeft" />
+    </Style>
+
+    <!-- 工具栏按钮 - 公共样式 -->
+    <Style TargetType="Label" x:Key="toolBtnCommon">
+        <Setter Property="Width" Value="60" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="Background" Value="#666" />
+        <Setter Property="HorizontalAlignment" Value="Right" />
+        <Setter Property="VerticalAlignment" Value="Top" />
+        <Setter Property="BorderThickness" Value="0,0,0,0" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+
+    <!-- 工具栏-确定 -->
+    <Style TargetType="Label" x:Key="toolLabelOK" BasedOn="{StaticResource toolBtnCommon}">
+        <Setter Property="Background" Value="AntiqueWhite" />
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="#F0DBBF" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- 工具栏-取消 -->
+    <Style TargetType="Label" x:Key="toolLabelCancel" BasedOn="{StaticResource toolBtnCommon}">
+        <Setter Property="Background" Value="LightGreen" />
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="#7CDB7C" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+    
+    <!-- 工具栏-下载 -->
+    <Style TargetType="Label" x:Key="toolLabelSaveAs" BasedOn="{StaticResource toolBtnCommon}">
+        <Setter Property="Background" Value="SkyBlue" />
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="#6FBCD8" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+    
+</ResourceDictionary>

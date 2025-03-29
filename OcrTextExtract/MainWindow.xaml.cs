@@ -1,12 +1,8 @@
 ﻿using Microsoft.Win32;
-using OcrTextExtract.Converters;
 using OcrTextExtract.Helpers;
-using OcrTextExtract.ViewModels;
-using System.Drawing.Imaging;
-using System.IO;
-using System.Text;
+using ScreenshotCapture.Converters;
+using ScreenshotCapture.ViewModels;
 using System.Windows;
-using System.Windows.Media;
 
 namespace OcrTextExtract;
 
@@ -53,16 +49,11 @@ public partial class MainWindow : System.Windows.Window
     /// </summary>
     private void btnCutExtract_Click(object sender, RoutedEventArgs e)
     {
-        // 1. 当前窗口隐藏 50ms
-        // 2. 截取全屏
-        // 3. 将截取的图像设置为图像处理窗口的背景图片, 然后进行区域截取处理
-
+        // 隐藏50ms毫秒, 避免当前窗口被拉入到中截图
         this.Hide();
         Thread.Sleep(50);
 
-
-        var bitmap = ImageHelpers.SnapshotScreen();
-        MaxScreenshotWindowViewModel viewModel = new MaxScreenshotWindowViewModel(bitmap);
+        MaxScreenshotWindowViewModel viewModel = new MaxScreenshotWindowViewModel();
         viewModel.OnSaveEvent += ViewModel_OnSaveEvent;
         viewModel.OnCancelEvent += ViewModel_OnCancelEvent;
         viewModel.SetStyles(s =>
@@ -70,11 +61,7 @@ public partial class MainWindow : System.Windows.Window
             // s.ToolBackgroundColor = ColorHelpers.FromString("#F2F2F2");
         });
 
-
-
-        var screenShot = new MaxScreenshotWindow(ref viewModel);
-        screenShot.Show();
-
+        viewModel.ShowCapture();
     }
 
     /// <summary>

@@ -1,15 +1,15 @@
-﻿using OcrTextExtract.Helpers;
+﻿using ScreenshotCapture.Helpers;
 using System.Drawing;
+using System.Windows;
 using System.Windows.Media;
 
-namespace OcrTextExtract.ViewModels
+namespace ScreenshotCapture.ViewModels
 {
     public class MaxScreenshotWindowViewModel
     {
         /// <inheritdoc />
-        public MaxScreenshotWindowViewModel(Bitmap bitmap)
+        public MaxScreenshotWindowViewModel()
         {
-            this.ScreenBitmap = bitmap;
             this.Styles = new ScreenshotStyles
             {
                 MaskBackgroundColor = ColorHelpers.FromString("#33222222"),
@@ -21,10 +21,14 @@ namespace OcrTextExtract.ViewModels
             };
         }
 
+
+        private MaxScreenshotWindow ScreenshotWindow { get; set; }
+
         /// <summary>
         /// 图片信息
         /// </summary>
-        public Bitmap ScreenBitmap { get; set; }
+        internal Bitmap ScreenBitmap { get; set; }
+        
 
 
         #region 样式
@@ -32,7 +36,7 @@ namespace OcrTextExtract.ViewModels
         /// <summary>
         /// 样式设置
         /// </summary>
-        public ScreenshotStyles Styles { get; private set; }
+        internal ScreenshotStyles Styles { get; private set; }
 
         public void SetStyles(Action<ScreenshotStyles> value)
         {
@@ -45,21 +49,46 @@ namespace OcrTextExtract.ViewModels
 
         public event Action<Bitmap> OnSaveEvent = null;
         public event Action<CloseEnum> OnCancelEvent = null;
-        public event Action<Bitmap> OnSaveAsEvent = null;
+        public event Action OnSaveAsEvent = null;
 
 
-        public void OnSave(Bitmap o) => this.OnSaveEvent?.Invoke(o);
+        internal void OnSave(Bitmap o) => this.OnSaveEvent?.Invoke(o);
 
-        public void OnCancel(CloseEnum o) => this.OnCancelEvent?.Invoke(o);
-        public void OnSaveAs(Bitmap o) => this.OnSaveAsEvent?.Invoke(o);
+        internal void OnCancel(CloseEnum o) => this.OnCancelEvent?.Invoke(o);
+        internal void OnSaveAs() => this.OnSaveAsEvent?.Invoke();
 
         #endregion
+
+        /// <summary>
+        /// 1. 截取全屏 <br />
+        /// 2. 将截取的图像设置为图像处理窗口的背景图片, 然后进行区域截取处理
+        /// </summary>
+        public void ShowCapture()
+        {
+            // 获取屏幕信息
+            this.ScreenBitmap = ImageHelpers.SnapshotScreen();
+
+            // 创建截图窗口
+            this.ScreenshotWindow = new MaxScreenshotWindow(this);
+            this.ScreenshotWindow.Show();
+        }
     }
+
 
     public enum CloseEnum
     {
         CloseWindow, // 表示 操作完毕后关闭 当前窗口
         ExitApp,     // 表示 从任务管理器，状态栏 等地方关闭的窗口，则退出程序
+    }
+
+    /// <summary>
+    /// 工作状态枚举
+    /// </summary>
+    public enum WorkStateEnum
+    {
+        Capture, // 截图
+        Move,    // 移动
+        Draw,    // 涂鸦
     }
 
     /// <summary>

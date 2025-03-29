@@ -1,12 +1,11 @@
-﻿using System;
-using System.Drawing;
+﻿using System.Drawing;
 using System.IO;
 using System.Windows.Media.Imaging;
 using System.Windows.Media;
 using System.Windows;
 using System.Drawing.Imaging;
 
-namespace OcrTextExtract.Converters
+namespace ScreenshotCapture.Converters
 {
     public class ImageConvert
     {
