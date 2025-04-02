@@ -18,5 +18,17 @@
         <Label Name="BtnCancel" Content="取消" Style="{StaticResource toolLabelCancel}" />
         <Label Name="BtnSaveAs" Content="下载" Style="{StaticResource toolLabelSaveAs}" />
 
+        <!--<Line Width="100" Height="100" X1="10" X2="100" Y1="10" StrokeThickness="3" Stroke="red" StrokeDashArray="2,2">
+        </Line>-->
+
+        <!--<Path Stroke="Red" StrokeThickness="1">
+            <Path.Data>
+                <GeometryGroup>
+                    <LineGeometry StartPoint="10,10" EndPoint="20,20" />
+                    <EllipseGeometry Center="10,10" RadiusX="3" RadiusY="3" />
+                </GeometryGroup>
+            </Path.Data>
+        </Path>-->
+
     </StackPanel>
 </UserControl>

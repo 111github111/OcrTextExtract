@@ -24,10 +24,7 @@ namespace ScreenshotCapture
         private StackPanel cutPanel = null;
         private Thickness cutPanelMargin = new Thickness(0, 0, 0, 0);
 
-        private StackPanel topPanel = null;
-        private StackPanel leftPanel = null;
-        private StackPanel rightPanel = null;
-        private StackPanel bottomPanel = null;
+        private MaskControl maskControl = null;
 
         private ToolControl tools = null;
         private bool toolIsNeedHide = false; // tool 是否需要隐藏, 截图时
@@ -124,10 +121,7 @@ namespace ScreenshotCapture
             this.cutPanel = ElementHelpers.CreateMask(Colors.Transparent);
             this.cutPanelMargin = new Thickness(0, 0, 0, 0);
             // 遮罩面板
-            this.topPanel = ElementHelpers.CreateMask(_viewModel.Styles.MaskBackgroundColor);
-            this.leftPanel = ElementHelpers.CreateMask(_viewModel.Styles.MaskBackgroundColor);
-            this.rightPanel = ElementHelpers.CreateMask(_viewModel.Styles.MaskBackgroundColor);
-            this.bottomPanel = ElementHelpers.CreateMask(_viewModel.Styles.MaskBackgroundColor);
+            this.maskControl = new MaskControl(_viewModel, new Rect(0, 0, this.Width, this.Height));
             // 工具面板
             this.tools = new ToolControl(_viewModel);
             // 工具面板-添加按钮
@@ -136,14 +130,17 @@ namespace ScreenshotCapture
                 this.tools.BtnOK.MouseUp += (object sender, MouseButtonEventArgs e) =>
                 {
                     // 1. 隐藏工具栏并延时 50 毫秒
-                    var delayMs = toolIsNeedHide ? 50 : 0;
-                    this.tools.HideDelayMs(delayMs).ContinueWith(s =>
+                    this.tools.Hide();
+                    this.maskControl.HidePath();
+                    Task.Delay(50).ContinueWith(s =>
                     {
                         // 2. 回到 ui 主线程, 继续执行
                         this.Dispatcher.Invoke(() =>
                         {
                             myClose = CloseEnum.CloseWindow;
-                            _viewModel.OnSave(CutImage());
+                            var bitmap = CutImage();
+                            this.Hide();
+                            _viewModel.OnSave(bitmap);
                             this.Close();
                         });
                     });
@@ -160,13 +157,15 @@ namespace ScreenshotCapture
                 this.tools.BtnSaveAs.MouseUp += (object sender, MouseButtonEventArgs e) =>
                 {
                     // 1. 隐藏工具栏并延时 50 毫秒
-                    var delayMs = toolIsNeedHide ? 50 : 0;
-                    this.tools.HideDelayMs(delayMs).ContinueWith(s =>
+                    this.tools.Hide();
+                    this.maskControl.HidePath();
+                    Task.Delay(50).ContinueWith(s =>
                     {
                         // 2. 回到 ui 主线程, 继续执行
                         this.Dispatcher.Invoke(() =>
                         {
                             var bitmap = CutImage();
+                            this.Hide();
 
                             SaveFileDialog saveFile = new SaveFileDialog();
                             saveFile.Filter = "png files (*.png)|*.png|jpeg files (*.jpeg)|*.jpeg|bmp files (*.bmp)|*.bmp";
@@ -199,22 +198,19 @@ namespace ScreenshotCapture
 
             // 清空上次操作遗留组件
             this.screenBox.Children.Clear();
-            this.screenBox.Background = new SolidColorBrush(Colors.Transparent);
 
             // 添加-剪切面板
             this.screenBox.Children.Add(this.cutPanel);
             // 添加-遮罩面板
-            this.screenBox.Children.Add(this.topPanel);
-            this.screenBox.Children.Add(this.leftPanel);
-            this.screenBox.Children.Add(this.rightPanel);
-            this.screenBox.Children.Add(this.bottomPanel);
+            this.maskControl.AppendTo(this.screenBox);
             // 添加-工具面板
             this.screenBox.Children.Add(this.tools);
 
+            this.screenBox.Background = new SolidColorBrush(Colors.Transparent);
 
             // 计算剪切面板、遮罩与工具面板的位置
             this.SetPanelRectangle(MouseState.Down, point);
-            this.SetOverlayRectangle(MouseState.Down, point);
+            this.SetOverlayRectangle(MouseState.Down);
             this.SetToolsPostion(MouseState.Down, point);
         }
 
@@ -230,7 +226,7 @@ namespace ScreenshotCapture
                 var point = e.GetPosition(this);
 
                 this.SetPanelRectangle(MouseState.Move, point);
-                this.SetOverlayRectangle(MouseState.Move, point);
+                this.SetOverlayRectangle(MouseState.Move);
                 this.SetToolsPostion(MouseState.Move, point);
             }
         }
@@ -246,7 +242,7 @@ namespace ScreenshotCapture
                 var point = e.GetPosition(this);
 
                 this.SetPanelRectangle(MouseState.Up, point);
-                this.SetOverlayRectangle(MouseState.Up, point);
+                this.SetOverlayRectangle(MouseState.Up);
                 this.SetToolsPostion(MouseState.Up, point);
 
                 this.isMouseDown = false;
@@ -312,23 +308,9 @@ namespace ScreenshotCapture
         /// <summary>
         /// 遮罩处理
         /// </summary>
-        private void SetOverlayRectangle(MouseState state, Point point)
+        private void SetOverlayRectangle(MouseState state)
         {
-            this.topPanel.Width = this.Width;
-            this.topPanel.Height = this.cutPanelMargin.Top;
-
-            this.leftPanel.Width = this.cutPanelMargin.Left;
-            this.leftPanel.Height = this.cutPanel.Height;
-            this.leftPanel.Margin = new Thickness(0, this.cutPanelMargin.Top, 0, 0);
-            
-            this.rightPanel.Width = this.Width - point.X + 20; // +20 避免像素计算时出现问题
-            this.rightPanel.Height = this.cutPanel.Height;
-            this.rightPanel.Margin = new Thickness(this.cutPanelMargin.Left + this.cutPanel.Width, this.cutPanelMargin.Top, 0, 0);
-
-            this.bottomPanel.Width = this.Width;
-            this.bottomPanel.Height = this.Height - point.Y + 20;  // +20 避免像素计算时出现问题
-            this.bottomPanel.Margin = new Thickness(0, this.cutPanelMargin.Top +  this.cutPanel.Height, 0, 0);
-
+            this.maskControl.SetLayout(cutPanel, cutPanelMargin);
         }
 
         /// <summary>

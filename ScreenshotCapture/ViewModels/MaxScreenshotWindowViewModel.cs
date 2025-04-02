@@ -13,11 +13,13 @@ namespace ScreenshotCapture.ViewModels
             this.Styles = new ScreenshotStyles
             {
                 MaskBackgroundColor = ColorHelpers.FromString("#33222222"),
+                
+                LineColor = ColorHelpers.FromString("#2080F0"),
 
                 ToolBackgroundColor = Colors.AliceBlue,
                 ToolPanelWidth = 200,
                 ToolPanelHeight = 32,
-                ToolPanelButtonHeight = 32
+                ToolPanelButtonHeight = 32,
             };
         }
 
@@ -29,7 +31,6 @@ namespace ScreenshotCapture.ViewModels
         /// </summary>
         internal Bitmap ScreenBitmap { get; set; }
         
-
 
         #region 样式
 
@@ -109,5 +110,11 @@ namespace ScreenshotCapture.ViewModels
         public int ToolPanelWidth { get; set; }
         public int ToolPanelHeight { get; set; }
         public int ToolPanelButtonHeight { get; set; }
+
+
+        /// <summary>
+        /// 线条颜色
+        /// </summary>
+        public System.Windows.Media.Color LineColor { get; set; }
     }
 }
