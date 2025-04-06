@@ -26,15 +26,15 @@ namespace ScreenshotCapture
 
         public RaiseElement RaiseObject { get; set; }
 
-        public MaskPath(Color bgColor, RaiseElement raiseObject)
+        public MaskPath(Color bgColor, RaiseElement rs)
         {
             // 赋值
-            this.RaiseObject = raiseObject;
+            this.RaiseObject = rs;
 
             // 初始化
-            this.LineRoot = ElementHelpers.CreatePath(bgColor, raiseObject);
-            this.StartRoot = ElementHelpers.CreatePath(bgColor, raiseObject);
-            this.EndRoot = ElementHelpers.CreatePath(bgColor, raiseObject);
+            this.LineRoot = ElementHelpers.CreatePath(bgColor, rs);
+            this.StartRoot = ElementHelpers.CreatePath(bgColor, rs + 1);
+            this.EndRoot = ElementHelpers.CreatePath(bgColor, rs + 2);
 
 
             // 线条 - 主体
@@ -59,6 +59,8 @@ namespace ScreenshotCapture
             this.Roots.Add(this.StartRoot);
             this.Roots.Add(this.EndRoot);
 
+            this.StartRoot.PreviewMouseDown += StartRoot_PreviewMouseDown;
+            this.EndRoot.PreviewMouseDown += EndRoot_PreviewMouseDown;
             this.LineRoot.PreviewMouseDown += Root_PreviewMouseDown;
         }
 
@@ -90,16 +92,35 @@ namespace ScreenshotCapture
         {
             OnMouseDownEvent?.Invoke(sender, e, this.RaiseObject);
         }
+
+        private void StartRoot_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            OnMouseDownEvent?.Invoke(sender, e, this.RaiseObject + 1);
+        }
+
+        private void EndRoot_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            OnMouseDownEvent?.Invoke(sender, e, this.RaiseObject + 2);
+        }
+
     }
 
 
     public enum RaiseElement
     {
-        CutRange, // 截图矩形
+        CutRange = 10, // 截图矩形
 
-        Top,      // 顶部线条
-        Left,     // 左侧线条
-        Right,    // 右侧线条
-        Bottom,   // 底部线条
+        Top = 20,      // 顶部线条
+        TopLeft,
+        TopRight,
+        Left = 30,     // 左侧线条
+        LeftTop,
+        LeftBottom,
+        Right = 40,    // 右侧线条
+        RightTop,
+        RightBottom,
+        Bottom = 50,   // 底部线条
+        BottomLeft,
+        BottomRight,
     }
 }

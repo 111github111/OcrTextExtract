@@ -44,6 +44,10 @@ namespace ScreenshotCapture
 
 
         private bool isExchange = false; // 用于解决快速交换时出现的bug
+        private RaiseElement[] leftKeys = new[] { RaiseElement.Left, RaiseElement.LeftTop, RaiseElement.LeftBottom, RaiseElement.TopLeft, RaiseElement.BottomLeft };
+        private RaiseElement[] rightKeys = new[] { RaiseElement.Right, RaiseElement.RightTop, RaiseElement.RightBottom, RaiseElement.TopRight, RaiseElement.BottomRight };
+        private RaiseElement[] topKeys = new[] { RaiseElement.Top, RaiseElement.TopLeft, RaiseElement.TopRight, RaiseElement.LeftTop, RaiseElement.RightTop };
+        private RaiseElement[] bottomKeys = new[] { RaiseElement.Bottom, RaiseElement.BottomLeft, RaiseElement.BottomRight, RaiseElement.LeftBottom, RaiseElement.RightBottom };
 
 
         public MaxScreenshotWindow(MaxScreenshotWindowViewModel viewModel)
@@ -136,78 +140,7 @@ namespace ScreenshotCapture
             this.maskControl.OnMouseDownEvent += OnMouseDownEvent;
 
             // 工具面板
-            this.tools = new ToolControl(_viewModel);
-            // 工具面板-添加按钮
-            {
-                // 保存
-                this.tools.BtnOK.MouseUp += (object sender, MouseButtonEventArgs e) =>
-                {
-                    // 1. 隐藏工具栏并延时 38 毫秒
-                    this.tools.Hide();
-                    this.maskControl.HidePath();
-                    Task.Delay(38).ContinueWith(s =>
-                    {
-                        // 2. 回到 ui 主线程, 继续执行
-                        this.Dispatcher.Invoke(() =>
-                        {
-                            myClose = CloseEnum.CloseWindow;
-                            var bitmap = CutImage();
-                            this.Hide();
-                            _viewModel.OnSave(bitmap);
-                            this.Close();
-                        });
-                    });
-                };
-
-                // 取消
-                this.tools.BtnCancel.MouseUp += (object sender, MouseButtonEventArgs e) =>
-                {
-                    myClose = CloseEnum.CloseWindow;
-                    this.Close();
-                };
-
-                // 下载 or 另存为
-                this.tools.BtnSaveAs.MouseUp += (object sender, MouseButtonEventArgs e) =>
-                {
-                    // 1. 隐藏工具栏并延时 38 毫秒
-                    this.tools.Hide();
-                    this.maskControl.HidePath();
-                    Task.Delay(38).ContinueWith(s =>
-                    {
-                        // 2. 回到 ui 主线程, 继续执行
-                        this.Dispatcher.Invoke(() =>
-                        {
-                            var bitmap = CutImage();
-                            this.Hide();
-
-                            SaveFileDialog saveFile = new SaveFileDialog();
-                            saveFile.Filter = "png files (*.png)|*.png|jpeg files (*.jpeg)|*.jpeg|bmp files (*.bmp)|*.bmp";
-                            saveFile.DefaultExt = ".png";
-                            saveFile.FileName = "cut.png";
-                            if (saveFile.ShowDialog() == true)
-                            {
-                                // 格式处理
-                                var extName = Path.GetExtension(saveFile.FileName);
-                                var format = extName switch
-                                {
-                                    ".jpeg" or ".jpg" => ImageFormat.Jpeg,
-                                    ".png" => ImageFormat.Png,
-                                    ".bmp" => ImageFormat.Bmp,
-                                    _ => ImageFormat.Jpeg
-                                };
-
-                                bitmap.Save(saveFile.FileName, format);
-                            }
-
-                            myClose = CloseEnum.CloseWindow;
-                            _viewModel.OnSaveAs();
-                            this.Close();
-                        });
-                    });
-
-                };
-            }
-
+            this.tools = CreateTool();
 
             // 清空上次操作遗留组件
             this.screenBox.Children.Clear();
@@ -282,6 +215,86 @@ namespace ScreenshotCapture
         }
 
 
+        private ToolControl CreateTool()
+        {
+            // 工具面板
+            var myTool = new ToolControl(_viewModel);
+
+            // 工具面板-添加按钮
+            {
+                // 保存
+                myTool.BtnOK.MouseUp += (object sender, MouseButtonEventArgs e) =>
+                {
+                    // 1. 隐藏工具栏并延时 38 毫秒
+                    myTool.Hide();
+                    this.maskControl.HidePath();
+                    Task.Delay(38).ContinueWith(s =>
+                    {
+                        // 2. 回到 ui 主线程, 继续执行
+                        this.Dispatcher.Invoke(() =>
+                        {
+                            myClose = CloseEnum.CloseWindow;
+                            var bitmap = CutImage();
+                            this.Hide();
+                            _viewModel.OnSave(bitmap);
+                            this.Close();
+                        });
+                    });
+                };
+
+                // 取消
+                myTool.BtnCancel.MouseUp += (object sender, MouseButtonEventArgs e) =>
+                {
+                    myClose = CloseEnum.CloseWindow;
+                    this.Close();
+                };
+
+                // 下载 or 另存为
+                myTool.BtnSaveAs.MouseUp += (object sender, MouseButtonEventArgs e) =>
+                {
+                    // 1. 隐藏工具栏并延时 38 毫秒
+                    myTool.Hide();
+                    this.maskControl.HidePath();
+                    Task.Delay(38).ContinueWith(s =>
+                    {
+                        // 2. 回到 ui 主线程, 继续执行
+                        this.Dispatcher.Invoke(() =>
+                        {
+                            var bitmap = CutImage();
+                            this.Hide();
+
+                            SaveFileDialog saveFile = new SaveFileDialog();
+                            saveFile.Filter = "png files (*.png)|*.png|jpeg files (*.jpeg)|*.jpeg|bmp files (*.bmp)|*.bmp";
+                            saveFile.DefaultExt = ".png";
+                            saveFile.FileName = "cut.png";
+                            if (saveFile.ShowDialog() == true)
+                            {
+                                // 格式处理
+                                var extName = Path.GetExtension(saveFile.FileName);
+                                var format = extName switch
+                                {
+                                    ".jpeg" or ".jpg" => ImageFormat.Jpeg,
+                                    ".png" => ImageFormat.Png,
+                                    ".bmp" => ImageFormat.Bmp,
+                                    _ => ImageFormat.Jpeg
+                                };
+
+                                bitmap.Save(saveFile.FileName, format);
+                            }
+
+                            myClose = CloseEnum.CloseWindow;
+                            _viewModel.OnSaveAs();
+                            this.Close();
+                        });
+                    });
+
+                };
+            }
+
+            return myTool;
+        }
+
+
         /// <summary>
         /// 剪切面板处理
         /// </summary>
@@ -338,7 +351,7 @@ namespace ScreenshotCapture
                 }
 
                 // 左侧
-                if (rs == RaiseElement.Left)
+                if (leftKeys.Contains(rs))
                 {
                     // value > 0, 修改左侧
                     // value < 0, 修改右侧
@@ -366,7 +379,7 @@ namespace ScreenshotCapture
                 }
 
                 // 右侧
-                if (rs == RaiseElement.Right)
+                if (rightKeys.Contains(rs))
                 {
                     if (point.X > tempCutPanelMargin.Left)
                     {
@@ -394,7 +407,7 @@ namespace ScreenshotCapture
                 }
 
                 // 顶部
-                if (rs == RaiseElement.Top)
+                if (topKeys.Contains(rs))
                 {
                     var absHeight = tempCutPanelMargin.Top + tempRect.Height;
 
@@ -423,7 +436,7 @@ namespace ScreenshotCapture
                 }
 
                 // 底部
-                if (rs == RaiseElement.Bottom)
+                if (bottomKeys.Contains(rs))
                 {
                     var absHeight = tempCutPanelMargin.Top + tempRect.Height;
                     if (point.Y > tempCutPanelMargin.Top)
@@ -470,10 +483,9 @@ namespace ScreenshotCapture
             if (state == MouseState.Down)
             {
                 this.tools.Hide();
-                this.tools.Height = 0;
             }
 
-            if (state== MouseState.Up)
+            if (state == MouseState.Up)
             {
                 // 底部剩余不足, 则显示在顶部
                 // 顶部剩余不足, 则显示在内部
