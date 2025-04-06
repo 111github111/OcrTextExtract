@@ -1,5 +1,4 @@
-﻿using System.IO;
-using System.Drawing.Imaging;
+﻿using System.Drawing.Imaging;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -9,6 +8,8 @@ using ScreenshotCapture.Helpers;
 using ScreenshotCapture.ViewModels;
 using ScreenshotCapture.Converters;
 using ScreenshotCapture.Extionsions;
+using ScreenshotCapture.Enums;
+using System.Windows.Shapes;
 
 namespace ScreenshotCapture
 {
@@ -40,6 +41,7 @@ namespace ScreenshotCapture
         // 记录调整前的大小
         private Rect tempRect = new Rect();
         private Thickness tempCutPanelMargin = new Thickness(0, 0, 0, 0);
+        private RaiseElement historyRaise = RaiseElement.CutRange;
         private RaiseElement raiseObject = RaiseElement.CutRange;
 
 
@@ -49,6 +51,12 @@ namespace ScreenshotCapture
         private RaiseElement[] topKeys = new[] { RaiseElement.Top, RaiseElement.TopLeft, RaiseElement.TopRight, RaiseElement.LeftTop, RaiseElement.RightTop };
         private RaiseElement[] bottomKeys = new[] { RaiseElement.Bottom, RaiseElement.BottomLeft, RaiseElement.BottomRight, RaiseElement.LeftBottom, RaiseElement.RightBottom };
 
+
+        private readonly List<Path> drawRamgeList = new List<Path>();
+        private readonly List<Path> drawArrowList = new List<Path>();
+        private Path tempPath = null;
+        private Geometry tempGmtry = null;
+        private bool isCreate = false;
 
         public MaxScreenshotWindow(MaxScreenshotWindowViewModel viewModel)
         {
@@ -124,39 +132,41 @@ namespace ScreenshotCapture
                 }
             }
 
+            if (this.raiseObject <= (RaiseElement)100)
+            {
+                // 设置背景图片
+                var brush = new ImageBrush(ImageConvert.BitmapToBitmapImage(_viewModel.ScreenBitmap));
+                brush.Stretch = Stretch.None;
+                this.Background = brush;
 
 
-            // 设置背景图片
-            var brush = new ImageBrush(ImageConvert.BitmapToBitmapImage(_viewModel.ScreenBitmap));
-            brush.Stretch = Stretch.None;
-            this.Background = brush;
+                // 剪切面板
+                this.cutPanel = ElementHelpers.CreateMask(Colors.Transparent);
+                this.cutPanelMargin = new Thickness(0, 0, 0, 0);
+                // 遮罩面板
+                this.maskControl = new MaskControl(_viewModel, this, this.cutPanel);
+                this.maskControl.OnMouseDownEvent += OnMouseDownEvent;
 
+                // 工具面板
+                this.tools = CreateTool();
 
-            // 剪切面板
-            this.cutPanel = ElementHelpers.CreateMask(Colors.Transparent);
-            this.cutPanelMargin = new Thickness(0, 0, 0, 0);
-            // 遮罩面板
-            this.maskControl = new MaskControl(_viewModel, this, this.cutPanel);
-            this.maskControl.OnMouseDownEvent += OnMouseDownEvent;
+                // 清空上次操作遗留组件
+                this.screenBox.Children.Clear();
 
-            // 工具面板
-            this.tools = CreateTool();
+                // 添加-剪切面板
+                this.screenBox.Children.Add(this.cutPanel);
+                // 添加-遮罩面板
+                this.maskControl.AppendTo(this.screenBox);
+                // 添加-工具面板
+                this.screenBox.Children.Add(this.tools);
 
-            // 清空上次操作遗留组件
-            this.screenBox.Children.Clear();
+                this.screenBox.Background = new SolidColorBrush(Colors.Transparent);
 
-            // 添加-剪切面板
-            this.screenBox.Children.Add(this.cutPanel);
-            // 添加-遮罩面板
-            this.maskControl.AppendTo(this.screenBox);
-            // 添加-工具面板
-            this.screenBox.Children.Add(this.tools);
+                // 非工具栏操作触发标识, 重置为截图操作
+                this.raiseObject = RaiseElement.CutRange;
+            }
 
-            this.screenBox.Background = new SolidColorBrush(Colors.Transparent);
-
-
-            // 鼠标按下
-            OnMouseDownEvent(point, RaiseElement.CutRange);
+            OnMouseDownEvent(point, this.raiseObject);
         }
 
 
@@ -270,7 +280,7 @@ namespace ScreenshotCapture
                             if (saveFile.ShowDialog() == true)
                             {
                                 // 格式处理
-                                var extName = Path.GetExtension(saveFile.FileName);
+                                var extName = System.IO.Path.GetExtension(saveFile.FileName);
                                 var format = extName switch
                                 {
                                     ".jpeg" or ".jpg" => ImageFormat.Jpeg,
@@ -288,6 +298,42 @@ namespace ScreenshotCapture
                         });
                     });
 
+                };
+
+                // 绘制矩形
+                myTool.BtnDrawRange.MouseUp += (object sender, MouseButtonEventArgs e) =>
+                {
+                    if (myTool.DrawRangeIsSelected)
+                    {
+                        // 记录历史状态
+                        historyRaise = this.raiseObject;
+
+                        // 设置当前操作状态
+                        this.raiseObject = RaiseElement.DrawRange;
+                    }
+                    else
+                    {
+                        // 还原历史状态
+                        this.raiseObject = historyRaise;
+                    }
+                };
+
+                // 绘制箭头
+                myTool.BtnDrawArrow.MouseUp += (object sender, MouseButtonEventArgs e) =>
+                {
+                    if (myTool.DrawArrowIsSelected)
+                    {
+                        // 记录历史状态
+                        historyRaise = this.raiseObject;
+
+                        // 设置当前操作状态
+                        this.raiseObject = RaiseElement.DrawArrow;
+                    }
+                    else
+                    {
+                        // 还原历史状态
+                        this.raiseObject = historyRaise;
+                    }
                 };
             }
 
@@ -340,6 +386,97 @@ namespace ScreenshotCapture
                     }
                 }
             }
+            else if (rs == RaiseElement.DrawRange)
+            {
+                var mgLeft = this.cutPanelMargin.Left;
+                var mgTop = this.cutPanelMargin.Top;
+                var absWidth = cutPanelMargin.Left + cutPanel.Width;
+                var absHeight = cutPanelMargin.Top + cutPanel.Height;
+
+                if (state == MouseState.Down)
+                {
+                    // 只有在截图区域创建的绘图对象才是有效对象
+                    if (point.X > mgLeft && point.X < absWidth &&
+                        point.Y > mgTop && point.Y < absHeight)
+                    {
+                        isCreate = true;
+
+                        this.point1 = point;
+                        tempPath = new Path();
+                        tempPath.Stroke = new SolidColorBrush(Colors.Red);
+                        tempPath.StrokeThickness = 2;
+
+                        var rectangle = new RectangleGeometry();
+                        rectangle.Rect = new Rect(point, point);
+                        tempPath.Data = tempGmtry = rectangle;
+
+                        this.screenBox.Children.Add(tempPath);
+                    }
+                    else
+                    {
+                        isCreate = false;
+                    }
+                }
+                else
+                {
+                    if (isCreate)
+                    {
+                        // 将 x,y 锁定在截图区域内
+                        var x = point.X <= mgLeft ? (mgLeft + 1) : (point.X >= absWidth ? (absWidth - 1) : point.X);
+                        var y = point.Y <= mgTop ? (mgTop + 1) : (point.Y >= absHeight ? (absHeight - 1) : point.Y);
+
+                        this.point2 = new Point(x, y);
+                        var myGmtry = tempGmtry as RectangleGeometry;
+                        myGmtry.Rect = new Rect(this.point1, this.point2);
+                    }
+                }
+            }
+            else if (rs == RaiseElement.DrawArrow)
+            {
+                var mgLeft = this.cutPanelMargin.Left;
+                var mgTop = this.cutPanelMargin.Top;
+                var absWidth = cutPanelMargin.Left + cutPanel.Width;
+                var absHeight = cutPanelMargin.Top + cutPanel.Height;
+
+                if (state == MouseState.Down)
+                {
+                    // 只有在截图区域创建的绘图对象才是有效对象
+                    if (point.X > mgLeft && point.X < absWidth &&
+                        point.Y > mgTop && point.Y < absHeight)
+                    {
+                        isCreate = true;
+
+                        this.point1 = point;
+                        tempPath = new Path();
+                        tempPath.Stroke = new SolidColorBrush(Colors.Red);
+                        tempPath.StrokeThickness = 2;
+
+                        var line = new LineGeometry();
+                        line.StartPoint = point;
+                        line.EndPoint = point;
+                        tempPath.Data = tempGmtry = line;
+
+                        this.screenBox.Children.Add(tempPath);
+                    }
+                    else
+                    {
+                        isCreate = false;
+                    }
+                }
+                else
+                {
+                    if (isCreate)
+                    {
+                        // 将 x,y 锁定在截图区域内
+                        var x = point.X <= mgLeft ? (mgLeft + 1) : (point.X >= absWidth ? (absWidth - 1) : point.X);
+                        var y = point.Y <= mgTop ? (mgTop + 1) : (point.Y >= absHeight ? (absHeight - 1) : point.Y);
+
+                        this.point2 = new Point(x, y);
+                        var myGmtry = tempGmtry as LineGeometry;
+                        myGmtry.EndPoint = this.point2;
+                    }
+                }
+            }
             else
             {
 
@@ -356,7 +493,7 @@ namespace ScreenshotCapture
                     // value > 0, 修改左侧
                     // value < 0, 修改右侧
                     var value = tempRect.Width - (point.X - tempCutPanelMargin.Left);
-                    if (value  > 0)
+                    if (value > 0)
                     {
                         this.cutPanelMargin.Left = point.X;
                         this.cutPanel.Width = value;
@@ -472,7 +609,8 @@ namespace ScreenshotCapture
         /// </summary>
         private void SetOverlayRectangle(MouseState state, RaiseElement rs)
         {
-            this.maskControl.SetLayout(cutPanel, cutPanelMargin, rs);
+            if (rs <= (RaiseElement)100)
+                this.maskControl.SetLayout(cutPanel, cutPanelMargin, rs);
         }
 
         /// <summary>
@@ -480,12 +618,12 @@ namespace ScreenshotCapture
         /// </summary>
         private void SetToolsPostion(MouseState state, Point point, RaiseElement rs)
         {
-            if (state == MouseState.Down)
+            if (state == MouseState.Down && rs <= (RaiseElement)100)
             {
                 this.tools.Hide();
             }
 
-            if (state == MouseState.Up)
+            if (state == MouseState.Up && rs <= (RaiseElement)100)
             {
                 // 底部剩余不足, 则显示在顶部
                 // 顶部剩余不足, 则显示在内部

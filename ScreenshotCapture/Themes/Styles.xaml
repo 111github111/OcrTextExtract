@@ -22,7 +22,7 @@
     </Style>
 
     <!-- 工具栏-确定 -->
-    <Style TargetType="Label" x:Key="toolLabelOK" BasedOn="{StaticResource toolBtnCommon}">
+    <Style TargetType="Label" x:Key="toolOK" BasedOn="{StaticResource toolBtnCommon}">
         <Setter Property="Background" Value="AntiqueWhite" />
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
@@ -32,7 +32,7 @@
     </Style>
 
     <!-- 工具栏-取消 -->
-    <Style TargetType="Label" x:Key="toolLabelCancel" BasedOn="{StaticResource toolBtnCommon}">
+    <Style TargetType="Label" x:Key="toolCancel" BasedOn="{StaticResource toolBtnCommon}">
         <Setter Property="Background" Value="LightGreen" />
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
@@ -42,7 +42,7 @@
     </Style>
     
     <!-- 工具栏-下载 -->
-    <Style TargetType="Label" x:Key="toolLabelSaveAs" BasedOn="{StaticResource toolBtnCommon}">
+    <Style TargetType="Label" x:Key="toolSaveAs" BasedOn="{StaticResource toolBtnCommon}">
         <Setter Property="Background" Value="SkyBlue" />
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
@@ -50,5 +50,15 @@
             </Trigger>
         </Style.Triggers>
     </Style>
-    
+
+    <!-- 工具栏-矩形 -->
+    <Style TargetType="Label" x:Key="toolDrawRange" BasedOn="{StaticResource toolBtnCommon}">
+        <Setter Property="Background" Value="#EEDAF3" />
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="#E6D3E5" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
 </ResourceDictionary>

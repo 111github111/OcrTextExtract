@@ -1,4 +1,5 @@
-﻿using ScreenshotCapture.ViewModels;
+﻿using ScreenshotCapture.Extionsions;
+using ScreenshotCapture.ViewModels;
 using System.Windows.Controls;
 using System.Windows.Media;
 
@@ -28,6 +29,44 @@ namespace ScreenshotCapture
 
             this.BtnOK.Height = _viewModel.Styles.ToolPanelButtonHeight;
             this.BtnCancel.Height = _viewModel.Styles.ToolPanelButtonHeight;
+
+            // 默认隐藏
+            this.DrawRangeOKIdentific.Hide();
+            this.DrawArrowOKIdentific.Hide();
+        }
+
+
+
+
+        public bool DrawRangeIsSelected { get; private set; } = false;
+        public bool DrawArrowIsSelected { get; private set; } = false;
+
+        private void BtnDrawRange_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (DrawRangeIsSelected)
+            {
+                DrawRangeIsSelected = false;
+                this.DrawRangeOKIdentific.Hide();
+            }
+            else
+            {
+                DrawRangeIsSelected = true;
+                this.DrawRangeOKIdentific.Show();
+            }
+        }
+
+        private void BtnDrawArrow_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (DrawArrowIsSelected)
+            {
+                DrawArrowIsSelected = false;
+                this.DrawArrowOKIdentific.Hide();
+            }
+            else
+            {
+                DrawArrowIsSelected = true;
+                this.DrawArrowOKIdentific.Show();
+            }
         }
     }
 }

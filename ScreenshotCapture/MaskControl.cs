@@ -1,4 +1,5 @@
-﻿using ScreenshotCapture.Extionsions;
+﻿using ScreenshotCapture.Enums;
+using ScreenshotCapture.Extionsions;
 using ScreenshotCapture.Helpers;
 using ScreenshotCapture.ViewModels;
 using System.Windows;

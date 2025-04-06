@@ -5,18 +5,92 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:ScreenshotCapture"
              mc:Ignorable="d" 
-             Width="200" Height="32" HorizontalAlignment="Left" VerticalAlignment="Top">
+             Width="320" Height="32" HorizontalAlignment="Left" VerticalAlignment="Top">
 
     <UserControl.Resources>
         <ResourceDictionary Source="/ScreenshotCapture;component/Themes/Styles.xaml" />
     </UserControl.Resources>
-    
 
-    <StackPanel Name="toolBox" Width="200" Height="32" Style="{StaticResource toolBox}">
 
-        <Label Name="BtnOK" Content="确定" Style="{StaticResource toolLabelOK}" />
-        <Label Name="BtnCancel" Content="取消" Style="{StaticResource toolLabelCancel}" />
-        <Label Name="BtnSaveAs" Content="下载" Style="{StaticResource toolLabelSaveAs}" />
+    <StackPanel Name="toolBox" Width="320" Height="32" Style="{StaticResource toolBox}">
+
+        <Label Name="BtnOK" Content="确定" Style="{StaticResource toolOK}" />
+        <Label Name="BtnCancel" Content="取消" Style="{StaticResource toolCancel}" />
+        <Label Name="BtnSaveAs" Content="下载" Style="{StaticResource toolSaveAs}" />
+
+        <Label Name="BtnDrawRange" Style="{StaticResource toolDrawRange}" Mouse.MouseDown="BtnDrawRange_MouseDown">
+            <StackPanel Orientation="Vertical" Width="60" HorizontalAlignment="Center" VerticalAlignment="Stretch">
+
+                <Path Stroke="#666" StrokeThickness="1" VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <Path.Data>
+                        <GeometryGroup>
+                            <LineGeometry StartPoint="0,1" EndPoint="25,1" />
+                            <LineGeometry StartPoint="0,18" EndPoint="25,18" />
+                            <LineGeometry StartPoint="0,18" EndPoint="0,1" />
+                            <LineGeometry StartPoint="25,18" EndPoint="25,1" />
+                        </GeometryGroup>
+                    </Path.Data>
+                </Path>
+
+                <Path Name="DrawRangeOKIdentific" Stroke="#3EBF6C" StrokeThickness="1" Margin="-20,-12,0,0" VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <Path.Data>
+                        <GeometryGroup>
+                            <LineGeometry StartPoint="14,5" EndPoint="10,10" />
+                            <LineGeometry StartPoint="0,3" EndPoint="10,10" />
+                        </GeometryGroup>
+                    </Path.Data>
+                </Path>
+            </StackPanel>
+        </Label>
+
+        <Label Name="BtnDrawArrow" Style="{StaticResource toolDrawRange}" Mouse.MouseDown="BtnDrawArrow_MouseDown">
+            <StackPanel Orientation="Vertical" Width="60" HorizontalAlignment="Center" VerticalAlignment="Stretch">
+
+                <Path Stroke="#666" StrokeThickness="1" VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <Path.Fill>
+                        <SolidColorBrush Color="#666" />
+                    </Path.Fill>
+                    <Path.Data>
+                        <GeometryGroup>
+
+                            <PathGeometry>
+                                <PathGeometry.Figures>
+                                    <PathFigureCollection>
+                                        <PathFigure IsClosed="True" StartPoint="1,1.15" />
+                                        <PathFigure>
+                                            <LineSegment Point="3.5,8" />
+                                            <LineSegment Point="5,4" />
+                                        </PathFigure>
+
+                                        <PathFigure IsClosed="True" StartPoint="1,1.95" />
+                                        <PathFigure>
+                                            <LineSegment Point="8,2" />
+                                            <LineSegment Point="5,4" />
+                                        </PathFigure>
+
+                                        <PathFigure IsClosed="True" StartPoint="8,2" />
+                                        <PathFigure>
+                                            <LineSegment Point="25,18" />
+                                            <LineSegment Point="5,4" />
+                                        </PathFigure>
+                                    </PathFigureCollection>
+                                </PathGeometry.Figures>
+                            </PathGeometry>
+                            
+                        </GeometryGroup>
+                    </Path.Data>
+                </Path>
+
+                <Path Name="DrawArrowOKIdentific" Stroke="#3EBF6C" StrokeThickness="1" Margin="-20,-12,0,0" VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <Path.Data>
+                        <GeometryGroup>
+                            <LineGeometry StartPoint="14,5" EndPoint="10,10" />
+                            <LineGeometry StartPoint="0,3" EndPoint="10,10" />
+                        </GeometryGroup>
+                    </Path.Data>
+                </Path>
+            </StackPanel>
+        </Label>
 
         <!--<Line Width="100" Height="100" X1="10" X2="100" Y1="10" StrokeThickness="3" Stroke="red" StrokeDashArray="2,2">
         </Line>-->

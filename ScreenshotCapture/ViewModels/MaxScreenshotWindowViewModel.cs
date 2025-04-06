@@ -17,7 +17,7 @@ namespace ScreenshotCapture.ViewModels
                 LineColor = ColorHelpers.FromString("#2080F0"),
 
                 ToolBackgroundColor = Colors.AliceBlue,
-                ToolPanelWidth = 200,
+                ToolPanelWidth = 320,
                 ToolPanelHeight = 32,
                 ToolPanelButtonHeight = 32,
             };

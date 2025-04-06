@@ -1,4 +1,5 @@
-﻿using ScreenshotCapture.Helpers;
+﻿using ScreenshotCapture.Enums;
+using ScreenshotCapture.Helpers;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -103,24 +104,5 @@ namespace ScreenshotCapture
             OnMouseDownEvent?.Invoke(sender, e, this.RaiseObject + 2);
         }
 
-    }
-
-
-    public enum RaiseElement
-    {
-        CutRange = 10, // 截图矩形
-
-        Top = 20,      // 顶部线条
-        TopLeft,
-        TopRight,
-        Left = 30,     // 左侧线条
-        LeftTop,
-        LeftBottom,
-        Right = 40,    // 右侧线条
-        RightTop,
-        RightBottom,
-        Bottom = 50,   // 底部线条
-        BottomLeft,
-        BottomRight,
     }
 }
