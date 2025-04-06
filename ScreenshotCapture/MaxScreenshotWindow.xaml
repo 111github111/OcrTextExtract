@@ -5,12 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ScreenshotCapture"
         mc:Ignorable="d"
-        WindowState="Maximized" WindowStyle="None" 
-        AllowsTransparency="True" Background="Transparent">
+        WindowState="Maximized" WindowStyle="None" AllowsTransparency="True"
+        Background="Transparent">
     
     <!--
-        Width="500" Height="360"
-        WindowState="Maximized" WindowStyle="None"
+        Width="500" Height="360" WindowStartupLocation="CenterScreen"
+        WindowState="Maximized" WindowStyle="None" AllowsTransparency="True"
     
         Background="#33222222"
     -->

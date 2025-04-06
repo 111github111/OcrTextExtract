@@ -37,6 +37,15 @@ namespace ScreenshotCapture
         private WorkStateEnum workState = WorkStateEnum.Capture; // 工作状态
 
 
+        // 记录调整前的大小
+        private Rect tempRect = new Rect();
+        private Thickness tempCutPanelMargin = new Thickness(0, 0, 0, 0);
+        private RaiseElement raiseObject = RaiseElement.CutRange;
+
+
+        private bool isExchange = false; // 用于解决快速交换时出现的bug
+
+
         public MaxScreenshotWindow(MaxScreenshotWindowViewModel viewModel)
         {
             _viewModel = viewModel;
@@ -46,9 +55,12 @@ namespace ScreenshotCapture
             this.Loaded += MaxScreenshotWindow_Loaded;
 
             // 执行顺序: down -> move -> up
-            this.PreviewMouseLeftButtonDown += MaxScreenshotWindow_PreviewMouseLeftButtonDown;
-            this.PreviewMouseMove += MaxScreenshotWindow_PreviewMouseMove;
-            this.PreviewMouseLeftButtonUp += MaxScreenshotWindow_PreviewMouseLeftButtonUp;
+            //   this.PreviewMouseLeftButtonDown
+            //   this.PreviewMouseMove
+            //   this.PreviewMouseLeftButtonUp
+            this.MouseLeftButtonDown += MaxScreenshotWindow_PreviewMouseLeftButtonDown;
+            this.MouseMove += MaxScreenshotWindow_PreviewMouseMove;
+            this.MouseLeftButtonUp += MaxScreenshotWindow_PreviewMouseLeftButtonUp;
 
             this.KeyDown += MaxScreenshotWindow_KeyDown;
             this.Closing += MaxScreenshotWindow_Closing;
@@ -88,6 +100,8 @@ namespace ScreenshotCapture
         /// </summary>
         private void MaxScreenshotWindow_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
+            Console.WriteLine("Window...Down");
+
             // 获取鼠标相对于窗口的位置
             var point = e.GetPosition(this);
 
@@ -114,14 +128,13 @@ namespace ScreenshotCapture
             this.Background = brush;
 
 
-            // 初始化或重置参数
-            this.isMouseDown = true;
-
             // 剪切面板
             this.cutPanel = ElementHelpers.CreateMask(Colors.Transparent);
             this.cutPanelMargin = new Thickness(0, 0, 0, 0);
             // 遮罩面板
-            this.maskControl = new MaskControl(_viewModel, new Rect(0, 0, this.Width, this.Height));
+            this.maskControl = new MaskControl(_viewModel, this, this.cutPanel);
+            this.maskControl.OnMouseDownEvent += OnMouseDownEvent;
+
             // 工具面板
             this.tools = new ToolControl(_viewModel);
             // 工具面板-添加按钮
@@ -129,10 +142,10 @@ namespace ScreenshotCapture
                 // 保存
                 this.tools.BtnOK.MouseUp += (object sender, MouseButtonEventArgs e) =>
                 {
-                    // 1. 隐藏工具栏并延时 50 毫秒
+                    // 1. 隐藏工具栏并延时 38 毫秒
                     this.tools.Hide();
                     this.maskControl.HidePath();
-                    Task.Delay(50).ContinueWith(s =>
+                    Task.Delay(38).ContinueWith(s =>
                     {
                         // 2. 回到 ui 主线程, 继续执行
                         this.Dispatcher.Invoke(() =>
@@ -156,10 +169,10 @@ namespace ScreenshotCapture
                 // 下载 or 另存为
                 this.tools.BtnSaveAs.MouseUp += (object sender, MouseButtonEventArgs e) =>
                 {
-                    // 1. 隐藏工具栏并延时 50 毫秒
+                    // 1. 隐藏工具栏并延时 38 毫秒
                     this.tools.Hide();
                     this.maskControl.HidePath();
-                    Task.Delay(50).ContinueWith(s =>
+                    Task.Delay(38).ContinueWith(s =>
                     {
                         // 2. 回到 ui 主线程, 继续执行
                         this.Dispatcher.Invoke(() =>
@@ -208,26 +221,31 @@ namespace ScreenshotCapture
 
             this.screenBox.Background = new SolidColorBrush(Colors.Transparent);
 
-            // 计算剪切面板、遮罩与工具面板的位置
-            this.SetPanelRectangle(MouseState.Down, point);
-            this.SetOverlayRectangle(MouseState.Down);
-            this.SetToolsPostion(MouseState.Down, point);
+
+            // 鼠标按下
+            OnMouseDownEvent(point, RaiseElement.CutRange);
         }
+
+
 
         /// <summary>
         /// 鼠标移动
         /// </summary>
         private void MaxScreenshotWindow_PreviewMouseMove(object sender, MouseEventArgs e)
         {
+
+            Console.WriteLine("win -- " + Random.Shared.Next(10, 50));
+
             // 按下鼠标后, 移动操作才属于有效操作
             if (isMouseDown)
             {
                 // 获取鼠标相对于窗口的位置
                 var point = e.GetPosition(this);
+                // 鼠标移动
+                this.SetPanelRectangle(MouseState.Move, point, this.raiseObject);
+                this.SetOverlayRectangle(MouseState.Move, this.raiseObject);
+                this.SetToolsPostion(MouseState.Move, point, this.raiseObject);
 
-                this.SetPanelRectangle(MouseState.Move, point);
-                this.SetOverlayRectangle(MouseState.Move);
-                this.SetToolsPostion(MouseState.Move, point);
             }
         }
 
@@ -238,12 +256,14 @@ namespace ScreenshotCapture
         {
             if (isMouseDown)
             {
+
                 // 获取鼠标相对于窗口的位置
                 var point = e.GetPosition(this);
 
-                this.SetPanelRectangle(MouseState.Up, point);
-                this.SetOverlayRectangle(MouseState.Up);
-                this.SetToolsPostion(MouseState.Up, point);
+                // 鼠标弹起
+                this.SetPanelRectangle(MouseState.Up, point, this.raiseObject);
+                this.SetOverlayRectangle(MouseState.Up, this.raiseObject);
+                this.SetToolsPostion(MouseState.Up, point, this.raiseObject);
 
                 this.isMouseDown = false;
             }
@@ -265,42 +285,171 @@ namespace ScreenshotCapture
         /// <summary>
         /// 剪切面板处理
         /// </summary>
-        private void SetPanelRectangle(MouseState state, Point point)
+        private void SetPanelRectangle(MouseState state, Point point, RaiseElement rs)
         {
             // Console.WriteLine($"{ state.ToString() }, x = {point.X}, y = {point.Y}");
 
-            if (state == MouseState.Down)
+            this.raiseObject = rs;
+            if (rs == RaiseElement.CutRange)
             {
-                this.point1 = point;
-                this.cutPanel.Margin = this.cutPanelMargin = new Thickness(point.X, point.Y, 0, 0);
+                if (state == MouseState.Down)
+                {
+                    this.point1 = point;
+                    this.cutPanel.Margin = this.cutPanelMargin = new Thickness(point.X, point.Y, 0, 0);
+                }
+                else
+                {
+                    this.point2 = point;
+
+                    var newWidth = this.point2.X - this.point1.X;
+                    var newHeight = this.point2.Y - this.point1.Y;
+                    if (newWidth >= 0)
+                    {
+                        cutPanel.Width = newWidth;
+                    }
+                    else
+                    {
+                        this.cutPanel.Width = Math.Abs(newWidth);
+                        this.cutPanelMargin.Left = this.point1.X - Math.Abs(newWidth);
+                        this.cutPanel.Margin = this.cutPanelMargin;
+                    }
+
+
+                    if (newHeight >= 0)
+                    {
+                        cutPanel.Height = newHeight;
+                    }
+                    else
+                    {
+                        this.cutPanel.Height = Math.Abs(newHeight);
+                        this.cutPanelMargin.Top = this.point1.Y - Math.Abs(newHeight);
+                        this.cutPanel.Margin = this.cutPanelMargin;
+                    }
+                }
             }
             else
             {
-                this.point2 = point;
 
-                var newWidth = this.point2.X - this.point1.X;
-                var newHeight = this.point2.Y - this.point1.Y;
-                if (newWidth >= 0)
+                if (state == MouseState.Down)
                 {
-                    cutPanel.Width = newWidth;
-                }
-                else
-                {
-                    this.cutPanel.Width = Math.Abs(newWidth);
-                    this.cutPanelMargin.Left = this.point1.X - Math.Abs(newWidth);
-                    this.cutPanel.Margin = this.cutPanelMargin;
+                    // 记录调整前的位置与大小
+                    tempRect = new Rect(0, 0, cutPanel.Width, cutPanel.Height);
+                    tempCutPanelMargin = new Thickness(cutPanelMargin.Left, cutPanelMargin.Top, cutPanelMargin.Right, cutPanelMargin.Bottom);
                 }
 
+                // 左侧
+                if (rs == RaiseElement.Left)
+                {
+                    // value > 0, 修改左侧
+                    // value < 0, 修改右侧
+                    var value = tempRect.Width - (point.X - tempCutPanelMargin.Left);
+                    if (value  > 0)
+                    {
+                        this.cutPanelMargin.Left = point.X;
+                        this.cutPanel.Width = value;
+                        this.cutPanel.Margin = this.cutPanelMargin;
+                        isExchange = true;
+                    }
+                    else
+                    {
+                        // 重置 margin-left
+                        if (isExchange)
+                        {
+                            this.cutPanelMargin.Left = tempCutPanelMargin.Left + tempRect.Width;
+                            isExchange = false;
+                        }
 
-                if (newHeight >= 0)
-                {
-                    cutPanel.Height = newHeight;
+                        this.cutPanelMargin.Right = point.X;
+                        this.cutPanel.Width = Math.Abs(value);
+                        this.cutPanel.Margin = this.cutPanelMargin;
+                    }
                 }
-                else
+
+                // 右侧
+                if (rs == RaiseElement.Right)
                 {
-                    this.cutPanel.Height = Math.Abs(newHeight);
-                    this.cutPanelMargin.Top = this.point1.Y - Math.Abs(newHeight);
-                    this.cutPanel.Margin = this.cutPanelMargin;
+                    if (point.X > tempCutPanelMargin.Left)
+                    {
+                        var moveValue = point.X - (tempCutPanelMargin.Left + tempRect.Width);
+
+                        this.cutPanelMargin.Left = tempCutPanelMargin.Left;
+                        this.cutPanel.Width = tempRect.Width + moveValue;
+                        this.cutPanel.Margin = this.cutPanelMargin;
+                        isExchange = true;
+                    }
+                    else
+                    {
+                        // 重置 margin-right
+                        if (isExchange)
+                        {
+                            this.cutPanelMargin.Right = tempCutPanelMargin.Left;
+                            isExchange = false;
+                        }
+
+                        var moveValue = tempCutPanelMargin.Left - point.X;
+                        this.cutPanelMargin.Left = tempCutPanelMargin.Left - moveValue;
+                        this.cutPanel.Width = moveValue;
+                        this.cutPanel.Margin = this.cutPanelMargin;
+                    }
+                }
+
+                // 顶部
+                if (rs == RaiseElement.Top)
+                {
+                    var absHeight = tempCutPanelMargin.Top + tempRect.Height;
+
+                    if (point.Y < absHeight)
+                    {
+                        var poorValue = absHeight - point.Y;
+                        this.cutPanelMargin.Top = absHeight - poorValue;
+                        this.cutPanel.Height = poorValue;
+                        this.cutPanel.Margin = this.cutPanelMargin;
+                        isExchange = true;
+                    }
+                    else
+                    {
+                        // 重置 margin-top
+                        if (isExchange)
+                        {
+                            this.cutPanelMargin.Top = absHeight;
+                            isExchange = false;
+                        }
+
+                        var poorValue = point.Y - absHeight;
+                        this.cutPanelMargin.Bottom = absHeight + poorValue;
+                        this.cutPanel.Height = poorValue;
+                        this.cutPanel.Margin = this.cutPanelMargin;
+                    }
+                }
+
+                // 底部
+                if (rs == RaiseElement.Bottom)
+                {
+                    var absHeight = tempCutPanelMargin.Top + tempRect.Height;
+                    if (point.Y > tempCutPanelMargin.Top)
+                    {
+                        var poorValue = point.Y - absHeight;
+
+                        this.cutPanelMargin.Top = tempCutPanelMargin.Top;
+                        this.cutPanelMargin.Bottom = absHeight - poorValue;
+                        this.cutPanel.Height = tempRect.Height + poorValue;
+                        this.cutPanel.Margin = this.cutPanelMargin;
+                        isExchange = true;
+                    }
+                    else
+                    {
+                        // 重置 margin-bottom
+                        if (isExchange)
+                        {
+                            this.cutPanelMargin.Bottom = tempCutPanelMargin.Top;
+                            isExchange = false;
+                        }
+
+                        var poorValue = tempCutPanelMargin.Top - point.Y;
+                        this.cutPanelMargin.Top = tempCutPanelMargin.Top - poorValue;
+                        this.cutPanel.Height = poorValue;
+                        this.cutPanel.Margin = this.cutPanelMargin;
+                    }
                 }
             }
         }
@@ -308,15 +457,15 @@ namespace ScreenshotCapture
         /// <summary>
         /// 遮罩处理
         /// </summary>
-        private void SetOverlayRectangle(MouseState state)
+        private void SetOverlayRectangle(MouseState state, RaiseElement rs)
         {
-            this.maskControl.SetLayout(cutPanel, cutPanelMargin);
+            this.maskControl.SetLayout(cutPanel, cutPanelMargin, rs);
         }
 
         /// <summary>
         /// 工具面板位置处理
         /// </summary>
-        private void SetToolsPostion(MouseState state, Point point)
+        private void SetToolsPostion(MouseState state, Point point, RaiseElement rs)
         {
             if (state == MouseState.Down)
             {
@@ -360,6 +509,26 @@ namespace ScreenshotCapture
 
                 this.tools.Show();
             }
+        }
+
+
+
+
+
+
+        /// <summary>
+        /// 鼠标按下
+        /// </summary>
+        private void OnMouseDownEvent(Point point, RaiseElement rs)
+        {
+            // 初始化或重置参数
+            this.isMouseDown = true;
+
+
+            // 计算剪切面板、遮罩与工具面板的位置
+            this.SetPanelRectangle(MouseState.Down, point, rs);
+            this.SetOverlayRectangle(MouseState.Down, rs);
+            this.SetToolsPostion(MouseState.Down, point, rs);
         }
 
         /// <summary>

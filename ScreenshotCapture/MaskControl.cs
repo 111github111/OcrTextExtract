@@ -3,6 +3,7 @@ using ScreenshotCapture.Helpers;
 using ScreenshotCapture.ViewModels;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace ScreenshotCapture
 {
@@ -22,15 +23,17 @@ namespace ScreenshotCapture
 
         private bool isShow = true;
 
-
         private readonly MaxScreenshotWindowViewModel _viewModel;
+        private readonly Window _window;
+        private readonly StackPanel _cutPanel;
         private readonly Rect _windowRect;
 
-        public MaskControl(MaxScreenshotWindowViewModel viewModel, Rect windowRect)
+        public MaskControl(MaxScreenshotWindowViewModel viewModel, Window window, StackPanel cutPanel)
         {
             this._viewModel = viewModel;
-            this._windowRect = windowRect;
-
+            this._window = window;
+            this._cutPanel = cutPanel;
+            this._windowRect = new Rect(0, 0, window.Width, window.Height);
 
             this.ResetPanel();
         }
@@ -44,11 +47,20 @@ namespace ScreenshotCapture
             this.RightPanel = ElementHelpers.CreateMask(_viewModel.Styles.MaskBackgroundColor);
             this.BottomPanel = ElementHelpers.CreateMask(_viewModel.Styles.MaskBackgroundColor);
 
-            this.topPath = new MaskPath(_viewModel.Styles.LineColor);
-            this.leftPath = new MaskPath(_viewModel.Styles.LineColor);
-            this.rightPath = new MaskPath(_viewModel.Styles.LineColor);
-            this.bottomPath = new MaskPath(_viewModel.Styles.LineColor);
+            this.topPath = new MaskPath(_viewModel.Styles.LineColor, RaiseElement.Top);
+            this.leftPath = new MaskPath(_viewModel.Styles.LineColor, RaiseElement.Left);
+            this.rightPath = new MaskPath(_viewModel.Styles.LineColor, RaiseElement.Right);
+            this.bottomPath = new MaskPath(_viewModel.Styles.LineColor, RaiseElement.Bottom);
+
+
+            // Down -> Move -> Up
+            this.topPath.OnMouseDownEvent += InnerMouseDownEvent;
+            this.leftPath.OnMouseDownEvent += InnerMouseDownEvent;
+            this.rightPath.OnMouseDownEvent += InnerMouseDownEvent;
+            this.bottomPath.OnMouseDownEvent += InnerMouseDownEvent;
         }
+
+
 
         public void AppendTo(Panel panel)
         {
@@ -57,14 +69,14 @@ namespace ScreenshotCapture
             panel.Children.Add(this.RightPanel);
             panel.Children.Add(this.BottomPanel);
 
-            panel.Children.Add(topPath.Root);
-            panel.Children.Add(leftPath.Root);
-            panel.Children.Add(rightPath.Root);
-            panel.Children.Add(bottomPath.Root);
+            topPath.Roots.ForEach(item => panel.Children.Add(item));
+            leftPath.Roots.ForEach(item => panel.Children.Add(item));
+            rightPath.Roots.ForEach(item => panel.Children.Add(item));
+            bottomPath.Roots.ForEach(item => panel.Children.Add(item));
         }
 
 
-        public void SetLayout(StackPanel cutPanel, Thickness cutPanelMargin)
+        public void SetLayout(StackPanel cutPanel, Thickness cutPanelMargin, RaiseElement raiseObject)
         {
 
             var xMax = cutPanelMargin.Left + cutPanel.Width;
@@ -99,10 +111,10 @@ namespace ScreenshotCapture
         {
             if (!isShow)
             {
-                this.topPath.Root.Show();
-                this.leftPath.Root.Show();
-                this.rightPath.Root.Show();
-                this.bottomPath.Root.Show();
+                this.topPath.Roots.ForEach(item => item.Show());
+                this.leftPath.Roots.ForEach(item => item.Show());
+                this.rightPath.Roots.ForEach(item => item.Show());
+                this.bottomPath.Roots.ForEach(item => item.Show());
                 isShow = true;
             }
         }
@@ -111,12 +123,26 @@ namespace ScreenshotCapture
         {
             if (isShow)
             {
-                this.topPath.Root.Hide();
-                this.leftPath.Root.Hide();
-                this.rightPath.Root.Hide();
-                this.bottomPath.Root.Hide();
+                this.topPath.Roots.ForEach(item => item.Hide());
+                this.leftPath.Roots.ForEach(item => item.Hide());
+                this.rightPath.Roots.ForEach(item => item.Hide());
+                this.bottomPath.Roots.ForEach(item => item.Hide());
                 isShow = false;
             }
+        }
+
+
+        public event Action<Point, RaiseElement> OnMouseDownEvent = null;
+
+        private void InnerMouseDownEvent(object sender, MouseButtonEventArgs e, RaiseElement raiseObject)
+        {
+            // 线条事件, 阻止事件冒泡
+            e.Handled = true;
+
+
+            // 获取鼠标相对于窗口的位置
+            var point = e.GetPosition(this._window);
+            OnMouseDownEvent?.Invoke(point, raiseObject);
         }
     }
 }
