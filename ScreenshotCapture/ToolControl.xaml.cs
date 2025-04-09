@@ -1,7 +1,9 @@
 ﻿using ScreenshotCapture.Enums;
 using ScreenshotCapture.Extionsions;
+using ScreenshotCapture.Helpers;
 using ScreenshotCapture.ViewModels;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 
 namespace ScreenshotCapture
@@ -34,6 +36,7 @@ namespace ScreenshotCapture
             // 默认隐藏
             this.DrawRangeOKIdentific.Hide();
             this.DrawArrowOKIdentific.Hide();
+            this.SetRevokeState(false);
         }
 
 
@@ -57,6 +60,24 @@ namespace ScreenshotCapture
             else
                 SetDrawButtom(DrawType.None);
         }
+
+
+
+        public void SetRevokeState(bool isOK)
+        {
+            if (isOK)
+            {
+                this.BtnRevoke.Foreground = new SolidColorBrush(ColorHelpers.FromString("#222"));
+                this.BtnRevoke.Cursor = null;
+            }
+            else
+            {
+                this.BtnRevoke.Foreground = new SolidColorBrush(ColorHelpers.FromString("#666"));
+                this.BtnRevoke.Cursor = Cursors.No;
+            }
+        }
+
+
 
 
         private void SetDrawButtom(DrawType value)

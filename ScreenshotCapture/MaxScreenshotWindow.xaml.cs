@@ -51,8 +51,7 @@ namespace ScreenshotCapture
         private RaiseElement[] bottomKeys = new[] { RaiseElement.Bottom, RaiseElement.BottomLeft, RaiseElement.BottomRight, RaiseElement.LeftBottom, RaiseElement.RightBottom };
 
 
-        private readonly List<Shape> drawRamgeList = new List<Shape>();
-        private readonly List<Shape> drawArrowList = new List<Shape>();
+        private readonly List<RecordItem> drawRecordList = new List<RecordItem>();
         private bool isCreate = false;
         private int totalCount = 0;    // 第一下为 down事件, 第二下为 move 事件 (down后会立刻执行的那个move事件)
         private Path rangePath = null;
@@ -305,6 +304,24 @@ namespace ScreenshotCapture
 
                 };
 
+                // 撤销
+                myTool.BtnRevoke.MouseUp += (object sender, MouseButtonEventArgs e) =>
+                {
+                    if (this.drawRecordList.Any())
+                    {
+                        // 从集合中移除
+                        var last = this.drawRecordList.Last();
+                        this.drawRecordList.Remove(last);
+
+                        // 从界面中移除
+                        foreach (Shape item in last.GetShales())
+                            this.screenBox.Children.Remove(item);
+                    }
+
+                    // 更新撤销按钮状态
+                    this.tools.SetRevokeState(this.drawRecordList.Any());
+                };
+
                 // 绘制矩形
                 myTool.BtnDrawRange.MouseUp += (object sender, MouseButtonEventArgs e) =>
                 {
@@ -333,6 +350,24 @@ namespace ScreenshotCapture
                 ? (RaiseElement)drawValue // 设置当前操作状态
                 : RaiseElement.CutRange;   // 初始化操作状态
         }
+
+
+        /// <summary>
+        /// 设置四条边的鼠标状态
+        /// </summary>
+        private void SetMaskPathCursor()
+        {
+            var setCorsor = MaskCursor.SetCursor;
+            if (this.drawRecordList.Any() ||
+                this.raiseObject == RaiseElement.DrawRange ||
+                this.raiseObject == RaiseElement.DrawArrow)
+                setCorsor = MaskCursor.Default;
+            this.maskControl.SetMaskPathCursor(setCorsor);
+        }
+
+
+
+
 
 
         /// <summary>
@@ -408,9 +443,9 @@ namespace ScreenshotCapture
 
 
                         this.screenBox.Children.Add(rangePath);
-                        this.drawRamgeList.Add(rangePath);
+                        this.drawRecordList.Add(new RecordItem(rangePath));
 
-
+                        this.tools.SetRevokeState(true);
                         this.SetMaskPathCursor();
                     }
                     else
@@ -477,9 +512,9 @@ namespace ScreenshotCapture
 
                         this.screenBox.Children.Add(arrowPath);
                         this.screenBox.Children.Add(plygn);
-                        this.drawArrowList.Add(arrowPath);
-                        this.drawArrowList.Add(plygn);
+                        this.drawRecordList.Add(new RecordItem(arrowPath, plygn));
 
+                        this.tools.SetRevokeState(true);
                         this.SetMaskPathCursor();
                     }
                     else
@@ -738,22 +773,6 @@ namespace ScreenshotCapture
 
                 this.tools.Show();
             }
-        }
-
-
-
-        /// <summary>
-        /// 设置四条边的鼠标状态
-        /// </summary>
-        private void SetMaskPathCursor()
-        {
-            var setCorsor = MaskCursor.SetCursor;
-            if (this.drawRamgeList.Any() || 
-                this.drawArrowList.Any() ||
-                this.raiseObject == RaiseElement.DrawRange || 
-                this.raiseObject == RaiseElement.DrawArrow)
-                setCorsor = MaskCursor.Default;
-            this.maskControl.SetMaskPathCursor(setCorsor);
         }
 
 

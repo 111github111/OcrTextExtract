@@ -11,9 +11,9 @@
 
     <!-- 工具栏按钮 - 公共样式 -->
     <Style TargetType="Label" x:Key="toolBtnCommon">
-        <Setter Property="Width" Value="60" />
+        <Setter Property="Width" Value="48" />
         <Setter Property="Height" Value="32" />
-        <Setter Property="Background" Value="#666" />
+        <Setter Property="Foreground" Value="#222" />
         <Setter Property="HorizontalAlignment" Value="Right" />
         <Setter Property="VerticalAlignment" Value="Top" />
         <Setter Property="BorderThickness" Value="0,0,0,0" />
@@ -47,6 +47,16 @@
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
                 <Setter Property="Background" Value="#6FBCD8" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+    
+    <!-- 工具栏-撤销 -->
+    <Style TargetType="Label" x:Key="toolRevoke" BasedOn="{StaticResource toolBtnCommon}">
+        <Setter Property="Background" Value="#DEC49D" />
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="Tan" />
             </Trigger>
         </Style.Triggers>
     </Style>

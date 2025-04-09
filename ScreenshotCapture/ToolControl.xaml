@@ -17,9 +17,9 @@
         <Label Name="BtnOK" Content="确定" Style="{StaticResource toolOK}" />
         <Label Name="BtnCancel" Content="取消" Style="{StaticResource toolCancel}" />
         <Label Name="BtnSaveAs" Content="下载" Style="{StaticResource toolSaveAs}" />
-
+        <Label Name="BtnRevoke" Content="撤销" Style="{StaticResource toolRevoke}" />
         <Label Name="BtnDrawRange" Style="{StaticResource toolDrawRange}" Mouse.MouseDown="BtnDrawRange_MouseDown">
-            <StackPanel Orientation="Vertical" Width="60" HorizontalAlignment="Center" VerticalAlignment="Stretch">
+            <StackPanel Orientation="Vertical" Width="50" HorizontalAlignment="Center" VerticalAlignment="Stretch">
 
                 <Path Stroke="#666" StrokeThickness="1" VerticalAlignment="Center" HorizontalAlignment="Center">
                     <Path.Data>
@@ -44,7 +44,7 @@
         </Label>
 
         <Label Name="BtnDrawArrow" Style="{StaticResource toolDrawRange}" Mouse.MouseDown="BtnDrawArrow_MouseDown">
-            <StackPanel Orientation="Vertical" Width="60" HorizontalAlignment="Center" VerticalAlignment="Stretch">
+            <StackPanel Orientation="Vertical" Width="50" HorizontalAlignment="Center" VerticalAlignment="Stretch">
 
                 <Path Stroke="#666" StrokeThickness="1" VerticalAlignment="Center" HorizontalAlignment="Center">
                     <Path.Fill>
