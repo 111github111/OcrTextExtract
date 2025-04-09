@@ -29,6 +29,10 @@ namespace ScreenshotCapture
         private readonly StackPanel _cutPanel;
         private readonly Rect _windowRect;
 
+
+        private bool isAddDownEvent = false;
+
+
         public MaskControl(MaxScreenshotWindowViewModel viewModel, Window window, StackPanel cutPanel)
         {
             this._viewModel = viewModel;
@@ -59,6 +63,7 @@ namespace ScreenshotCapture
             this.leftPath.OnMouseDownEvent += InnerMouseDownEvent;
             this.rightPath.OnMouseDownEvent += InnerMouseDownEvent;
             this.bottomPath.OnMouseDownEvent += InnerMouseDownEvent;
+            this.isAddDownEvent = true;
         }
 
 
@@ -105,6 +110,40 @@ namespace ScreenshotCapture
             this.rightPath.SetValue(new Point(xMax, cutPanelMargin.Top), new Point(xMax, yMax));
             this.bottomPath.SetValue(new Point(cutPanelMargin.Left, yMax), new Point(xMax, yMax));
             this.ShowPath();
+        }
+
+        public void SetMaskPathCursor(MaskCursor value)
+        {
+            // 设置鼠标状态
+            this.topPath.SetCursor(value);
+            this.leftPath.SetCursor(value);
+            this.rightPath.SetCursor(value);
+            this.bottomPath.SetCursor(value);
+
+
+            // 根据鼠标状态处理事件
+            if (value == MaskCursor.Default)
+            {
+                if (this.isAddDownEvent)
+                {
+                    this.topPath.OnMouseDownEvent -= InnerMouseDownEvent;
+                    this.leftPath.OnMouseDownEvent -= InnerMouseDownEvent;
+                    this.rightPath.OnMouseDownEvent -= InnerMouseDownEvent;
+                    this.bottomPath.OnMouseDownEvent -= InnerMouseDownEvent;
+                    this.isAddDownEvent = false;
+                }
+            }
+            else
+            {
+                if (!this.isAddDownEvent)
+                {
+                    this.topPath.OnMouseDownEvent += InnerMouseDownEvent;
+                    this.leftPath.OnMouseDownEvent += InnerMouseDownEvent;
+                    this.rightPath.OnMouseDownEvent += InnerMouseDownEvent;
+                    this.bottomPath.OnMouseDownEvent += InnerMouseDownEvent;
+                    this.isAddDownEvent = true;
+                }
+            }
         }
 
 

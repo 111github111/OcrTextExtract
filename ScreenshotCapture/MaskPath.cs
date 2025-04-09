@@ -27,15 +27,24 @@ namespace ScreenshotCapture
 
         public RaiseElement RaiseObject { get; set; }
 
+
+        private RaiseElement[] weCorsor = { RaiseElement.Left, RaiseElement.Right };
+        private RaiseElement[] nsCorsor = { RaiseElement.Top, RaiseElement.Bottom };
+        private RaiseElement[] neswCorsor = { RaiseElement.TopRight, RaiseElement.RightTop, RaiseElement.LeftBottom, RaiseElement.BottomLeft };
+        private RaiseElement[] nwseCorsor = { RaiseElement.LeftTop, RaiseElement.TopLeft, RaiseElement.RightBottom, RaiseElement.BottomRight };
+
+
+
         public MaskPath(Color bgColor, RaiseElement rs)
         {
             // 赋值
             this.RaiseObject = rs;
 
             // 初始化
-            this.LineRoot = ElementHelpers.CreatePath(bgColor, rs);
-            this.StartRoot = ElementHelpers.CreatePath(bgColor, rs + 1);
-            this.EndRoot = ElementHelpers.CreatePath(bgColor, rs + 2);
+            this.LineRoot = ElementHelpers.CreatePath(bgColor);
+            this.StartRoot = ElementHelpers.CreatePath(bgColor);
+            this.EndRoot = ElementHelpers.CreatePath(bgColor);
+            this.SetCursor(MaskCursor.SetCursor);
 
 
             // 线条 - 主体
@@ -87,6 +96,49 @@ namespace ScreenshotCapture
         }
 
 
+        public void SetCursor(MaskCursor cursorValue)
+        {
+            this.SetCursor(this.LineRoot, this.RaiseObject, cursorValue);
+            this.SetCursor(this.StartRoot, this.RaiseObject + 1, cursorValue);
+            this.SetCursor(this.EndRoot, this.RaiseObject + 2, cursorValue);
+        }
+
+
+        /// <summary>
+        /// 设置鼠标状态
+        /// </summary>
+        private void SetCursor(Path path, RaiseElement rs, MaskCursor maskCursor)
+        {
+            if (maskCursor == MaskCursor.SetCursor)
+            {
+                path.Cursor = Cursors.Hand;
+
+
+                // 左右 ↔
+                if (weCorsor.Contains(rs))
+                    path.Cursor = Cursors.SizeWE;
+
+                // 上下 ↕
+                if (nsCorsor.Contains(rs))
+                    path.Cursor = Cursors.SizeNS;
+
+                // // 左下右上 ↗↙
+                // if (neswCorsor.Contains(rs))
+                //     path.Cursor = Cursors.SizeNESW;
+                // 
+                // // 左上右下 ↖↘
+                // if (nwseCorsor.Contains(rs))
+                //     path.Cursor = Cursors.SizeNWSE;
+            }
+            else
+            {
+                path.Cursor = Cursors.No;
+            }
+        }
+
+
+
+
         public event Action<object, MouseButtonEventArgs, RaiseElement> OnMouseDownEvent = null;
 
         private void Root_PreviewMouseDown(object sender, MouseButtonEventArgs e)
@@ -104,5 +156,11 @@ namespace ScreenshotCapture
             OnMouseDownEvent?.Invoke(sender, e, this.RaiseObject + 2);
         }
 
+    }
+
+    public enum MaskCursor
+    {
+        Default,
+        SetCursor,
     }
 }

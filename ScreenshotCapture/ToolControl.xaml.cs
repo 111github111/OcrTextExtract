@@ -1,4 +1,5 @@
-﻿using ScreenshotCapture.Extionsions;
+﻿using ScreenshotCapture.Enums;
+using ScreenshotCapture.Extionsions;
 using ScreenshotCapture.ViewModels;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -38,34 +39,49 @@ namespace ScreenshotCapture
 
 
 
-        public bool DrawRangeIsSelected { get; private set; } = false;
-        public bool DrawArrowIsSelected { get; private set; } = false;
+        public DrawType DrawSelect { get; private set; } =  DrawType.None;
 
         private void BtnDrawRange_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            if (DrawRangeIsSelected)
-            {
-                DrawRangeIsSelected = false;
-                this.DrawRangeOKIdentific.Hide();
-            }
+            if (this.DrawSelect != DrawType.Range)
+                SetDrawButtom(DrawType.Range);
             else
-            {
-                DrawRangeIsSelected = true;
-                this.DrawRangeOKIdentific.Show();
-            }
+                SetDrawButtom(DrawType.None);
+
         }
 
         private void BtnDrawArrow_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            if (DrawArrowIsSelected)
+            if (this.DrawSelect != DrawType.Arrow)
+                SetDrawButtom(DrawType.Arrow);
+            else
+                SetDrawButtom(DrawType.None);
+        }
+
+
+        private void SetDrawButtom(DrawType value)
+        {
+            this.DrawSelect = value;
+
+            // 显示矩形勾选
+            if (value == DrawType.Range)
             {
-                DrawArrowIsSelected = false;
+                this.DrawRangeOKIdentific.Show();
                 this.DrawArrowOKIdentific.Hide();
             }
-            else
+
+            // 显示箭头勾选
+            if (value == DrawType.Arrow)
             {
-                DrawArrowIsSelected = true;
+                this.DrawRangeOKIdentific.Hide();
                 this.DrawArrowOKIdentific.Show();
+            }
+
+            // 隐藏所有
+            if (value == DrawType.None)
+            {
+                this.DrawRangeOKIdentific.Hide();
+                this.DrawArrowOKIdentific.Hide();
             }
         }
     }

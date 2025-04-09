@@ -41,7 +41,6 @@ namespace ScreenshotCapture
         // 记录调整前的大小
         private Rect tempRect = new Rect();
         private Thickness tempCutPanelMargin = new Thickness(0, 0, 0, 0);
-        private RaiseElement historyRaise = RaiseElement.CutRange;
         private RaiseElement raiseObject = RaiseElement.CutRange;
 
 
@@ -52,11 +51,17 @@ namespace ScreenshotCapture
         private RaiseElement[] bottomKeys = new[] { RaiseElement.Bottom, RaiseElement.BottomLeft, RaiseElement.BottomRight, RaiseElement.LeftBottom, RaiseElement.RightBottom };
 
 
-        private readonly List<Path> drawRamgeList = new List<Path>();
-        private readonly List<Path> drawArrowList = new List<Path>();
-        private Path tempPath = null;
-        private Geometry tempGmtry = null;
+        private readonly List<Shape> drawRamgeList = new List<Shape>();
+        private readonly List<Shape> drawArrowList = new List<Shape>();
         private bool isCreate = false;
+        private int totalCount = 0;    // 第一下为 down事件, 第二下为 move 事件 (down后会立刻执行的那个move事件)
+        private Path rangePath = null;
+        private RectangleGeometry rangeGmtry = null;
+
+        private Path arrowPath = null;
+        private LineGeometry arrowLine = null;
+        private Polygon arrowPlygn = null;
+
 
         public MaxScreenshotWindow(MaxScreenshotWindowViewModel viewModel)
         {
@@ -303,41 +308,30 @@ namespace ScreenshotCapture
                 // 绘制矩形
                 myTool.BtnDrawRange.MouseUp += (object sender, MouseButtonEventArgs e) =>
                 {
-                    if (myTool.DrawRangeIsSelected)
-                    {
-                        // 记录历史状态
-                        historyRaise = this.raiseObject;
-
-                        // 设置当前操作状态
-                        this.raiseObject = RaiseElement.DrawRange;
-                    }
-                    else
-                    {
-                        // 还原历史状态
-                        this.raiseObject = historyRaise;
-                    }
+                    SetToolDrawRaise(myTool.DrawSelect);
+                    SetMaskPathCursor();
                 };
 
                 // 绘制箭头
                 myTool.BtnDrawArrow.MouseUp += (object sender, MouseButtonEventArgs e) =>
                 {
-                    if (myTool.DrawArrowIsSelected)
-                    {
-                        // 记录历史状态
-                        historyRaise = this.raiseObject;
-
-                        // 设置当前操作状态
-                        this.raiseObject = RaiseElement.DrawArrow;
-                    }
-                    else
-                    {
-                        // 还原历史状态
-                        this.raiseObject = historyRaise;
-                    }
+                    SetToolDrawRaise(myTool.DrawSelect);
+                    SetMaskPathCursor();
                 };
             }
 
             return myTool;
+        }
+
+
+        /// <summary>
+        /// 设置绘制时选择的值
+        /// </summary>
+        private void SetToolDrawRaise(DrawType drawValue)
+        {
+            this.raiseObject = drawValue == DrawType.Range || drawValue == DrawType.Arrow
+                ? (RaiseElement)drawValue // 设置当前操作状态
+                : RaiseElement.CutRange;   // 初始化操作状态
         }
 
 
@@ -400,17 +394,24 @@ namespace ScreenshotCapture
                         point.Y > mgTop && point.Y < absHeight)
                     {
                         isCreate = true;
+                        totalCount = 1;
 
                         this.point1 = point;
-                        tempPath = new Path();
-                        tempPath.Stroke = new SolidColorBrush(Colors.Red);
-                        tempPath.StrokeThickness = 2;
+                        rangePath = new Path();
+                        rangePath.Stroke = new SolidColorBrush(Colors.Red);
+                        rangePath.StrokeThickness = 2;
 
-                        var rectangle = new RectangleGeometry();
+                        // 矩形
+                        var rectangle = rangeGmtry = new RectangleGeometry();
                         rectangle.Rect = new Rect(point, point);
-                        tempPath.Data = tempGmtry = rectangle;
+                        rangePath.Data = rectangle;
 
-                        this.screenBox.Children.Add(tempPath);
+
+                        this.screenBox.Children.Add(rangePath);
+                        this.drawRamgeList.Add(rangePath);
+
+
+                        this.SetMaskPathCursor();
                     }
                     else
                     {
@@ -419,15 +420,15 @@ namespace ScreenshotCapture
                 }
                 else
                 {
-                    if (isCreate)
+                    totalCount++;
+                    if (isCreate && totalCount > 2)
                     {
                         // 将 x,y 锁定在截图区域内
                         var x = point.X <= mgLeft ? (mgLeft + 1) : (point.X >= absWidth ? (absWidth - 1) : point.X);
                         var y = point.Y <= mgTop ? (mgTop + 1) : (point.Y >= absHeight ? (absHeight - 1) : point.Y);
 
                         this.point2 = new Point(x, y);
-                        var myGmtry = tempGmtry as RectangleGeometry;
-                        myGmtry.Rect = new Rect(this.point1, this.point2);
+                        rangeGmtry.Rect = new Rect(this.point1, this.point2);
                     }
                 }
             }
@@ -445,18 +446,41 @@ namespace ScreenshotCapture
                         point.Y > mgTop && point.Y < absHeight)
                     {
                         isCreate = true;
+                        totalCount = 1;
 
                         this.point1 = point;
-                        tempPath = new Path();
-                        tempPath.Stroke = new SolidColorBrush(Colors.Red);
-                        tempPath.StrokeThickness = 2;
+                        arrowPath = new Path();
+                        arrowPath.Stroke = new SolidColorBrush(Colors.Red);
+                        arrowPath.StrokeThickness = 1.5;
 
-                        var line = new LineGeometry();
+                        
+                        // 线条
+                        var line = arrowLine = new LineGeometry();
                         line.StartPoint = point;
                         line.EndPoint = point;
-                        tempPath.Data = tempGmtry = line;
+                        arrowPath.Data = line;
 
-                        this.screenBox.Children.Add(tempPath);
+                        // 三角箭头
+                        var plygn = arrowPlygn = new Polygon();
+                        plygn.Stroke = new SolidColorBrush(Colors.Red);
+                        plygn.Fill = new SolidColorBrush(Colors.Red);
+                        plygn.StrokeThickness = 1;
+
+
+
+                        plygn.RenderTransform = new RotateTransform(15, point.X, point.Y);
+                        plygn.Points.Add(new Point(-2, -5));
+                        plygn.Points.Add(new Point(-2, 5));
+                        plygn.Points.Add(new Point(14, 0));
+                        plygn.Hide();
+
+
+                        this.screenBox.Children.Add(arrowPath);
+                        this.screenBox.Children.Add(plygn);
+                        this.drawArrowList.Add(arrowPath);
+                        this.drawArrowList.Add(plygn);
+
+                        this.SetMaskPathCursor();
                     }
                     else
                     {
@@ -465,15 +489,70 @@ namespace ScreenshotCapture
                 }
                 else
                 {
-                    if (isCreate)
+                    totalCount++;
+                    if (isCreate && totalCount > 2)
                     {
+
                         // 将 x,y 锁定在截图区域内
-                        var x = point.X <= mgLeft ? (mgLeft + 1) : (point.X >= absWidth ? (absWidth - 1) : point.X);
-                        var y = point.Y <= mgTop ? (mgTop + 1) : (point.Y >= absHeight ? (absHeight - 1) : point.Y);
+                        double x = point.X <= mgLeft ? (mgLeft + 1) : (point.X >= absWidth ? (absWidth - 1) : point.X);
+                        double y = point.Y <= mgTop ? (mgTop + 1) : (point.Y >= absHeight ? (absHeight - 1) : point.Y);
+
+
+                        // 处理箭头绘制到截图区域之外的问题
+                        // -2, -2, 14
+                        // -5, 5
+                        // 获取其中的最大值
+                        var offset = 14;
+
+                        if (point.X - offset <= mgLeft)
+                            x = mgLeft + 1 + offset;
+                        else
+                            x = point.X + offset >= absWidth ? (absWidth - 1 - offset) : point.X;
+
+
+                        if (point.Y - offset <= mgTop)
+                            y = mgTop + 1 + offset;
+                        else
+                            y = point.Y + offset >= absHeight ? (absHeight - 1 - offset) : point.Y;
+
+
+                        // 中心点计算
+                        // 旋转角度计算
+                        // <RotateTransform CenterX="30" CenterY="16" Angle="90" />
+
+
+                        // 边长
+                        var a = Math.Abs(point1.Y - point2.Y);
+                        var b = Math.Abs(point1.X - point2.X);
+
+
+                        // 旋转角度计算
+                        var angle = Math.Atan(a / b) * 180 / Math.PI;
+
+                        // 象限-角度处理
+                        angle =
+                            point2.X - point1.X >= 0 && point2.Y - point1.Y <= 0 ? (-angle) :       // 第一象限
+                            point2.X - point1.X >= 0 && point2.Y - point1.Y >= 0 ? angle :          // 第二象限
+                            point2.X - point1.X <= 0 && point2.Y - point1.Y >= 0 ? (-angle + 180) : // 第三象限
+                            point2.X - point1.X <= 0 && point2.Y - point1.Y <= 0 ? angle - 180 :    // 第四象限
+                            angle;
+
+
+                        var rotate = arrowPlygn.RenderTransform as RotateTransform;
+                        rotate.Angle = angle;
+                        rotate.CenterX = point2.X;
+                        rotate.CenterY = point2.Y;
 
                         this.point2 = new Point(x, y);
-                        var myGmtry = tempGmtry as LineGeometry;
-                        myGmtry.EndPoint = this.point2;
+                        arrowLine.EndPoint = this.point2;
+
+
+                        arrowPlygn.Points[0] = new Point(x - 2, y + -5);
+                        arrowPlygn.Points[1] = new Point(x - 2, y + 5);
+                        arrowPlygn.Points[2] = new Point(x + 14, y);
+
+                        if (totalCount == 3)
+                            arrowPlygn.Show();
                     }
                 }
             }
@@ -661,6 +740,21 @@ namespace ScreenshotCapture
             }
         }
 
+
+
+        /// <summary>
+        /// 设置四条边的鼠标状态
+        /// </summary>
+        private void SetMaskPathCursor()
+        {
+            var setCorsor = MaskCursor.SetCursor;
+            if (this.drawRamgeList.Any() || 
+                this.drawArrowList.Any() ||
+                this.raiseObject == RaiseElement.DrawRange || 
+                this.raiseObject == RaiseElement.DrawArrow)
+                setCorsor = MaskCursor.Default;
+            this.maskControl.SetMaskPathCursor(setCorsor);
+        }
 
 
 
